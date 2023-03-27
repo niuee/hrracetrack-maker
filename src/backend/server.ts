@@ -1,13 +1,17 @@
-const express = require('express');
-const path = require('path');
+// import * as express from "express";
+import express from "express";
+import * as path from "path";
+import { Bezier } from "bezier-js";
+
 require('dotenv').config();
+
 
 
 
 const app = express();
 
 // Serve the static files from the React app
-app.use(express.static(path.join(__dirname, 'build')));
+app.use(express.static(path.resolve(__dirname, "..")));
 
 // Handles any requests that don't match the ones above
 app.get('*', (req,res) =>{

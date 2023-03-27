@@ -1,15 +1,17 @@
 {
     "compilerOptions": {
-        "outDir": "./dist/",
-        "module": "commonjs",
-        "target": "es6",
-        "lib": ["es6", "DOM"],
-        "sourceMap": true,
-        "declaration": false,
-        "esModuleInterop": true,
-        "jsx": "react"
+      "target": "es6",
+      "module": "es6",
+      "moduleResolution": "node",
+      "sourceMap": true,
+      "outDir": "./dist",
+      "baseUrl": "./src",
+      "experimentalDecorators": true,
+      "allowSyntheticDefaultImports": true,
+      "jsx": "react",
     },
+
     "include": ["src/**/*"],
-    "exclude": ["node_modules"]
-}
+    "exclude": ["node_modules", "**/*.spec.ts"]
+  }
   

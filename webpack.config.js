@@ -27,7 +27,6 @@ module.exports = [
 {
     mode: "development",
     entry: './src/frontend/index.tsx',
-    target: 'web',
     module: {
       rules: [
         {
