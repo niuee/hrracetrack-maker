@@ -1,12 +1,12 @@
 // import * as express from "express";
 import express from "express";
-import * as path from "path";
+import path from "path";
 import { Bezier } from "bezier-js";
-
+import { add } from "./test";
 require('dotenv').config();
 
 
-
+console.log(add(1, 2));
 
 const app = express();
 
