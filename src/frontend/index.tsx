@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import {Home} from "./pages/Home";
 import RaceTrackBuildPage from './pages/RaceTrack';
+import RaceTrackBuildCircularArcPage from './pages/RaceTrack-cir-arc';
 import TJS from './pages/TJS';
 
 
@@ -23,6 +24,7 @@ const Index = () => {
               <Route path="/" element={<Home/>}/>
               <Route path="/build_track" element={<RaceTrackBuildPage/>}/>
               <Route path="/test_page" element={<TJS/>}/>
+              <Route path="/buildCirArcTrack" element={<RaceTrackBuildCircularArcPage/>}/>
           </Routes> 
       </Router>
       /** 

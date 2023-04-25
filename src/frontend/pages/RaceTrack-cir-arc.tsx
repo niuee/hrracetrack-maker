@@ -35,7 +35,7 @@ type SegmentData = {
 }
 
 
-export default function RaceTrackBuildPage():JSX.Element {
+export default function RaceTrackBuildCircularArcPage():JSX.Element {
     const navigate = useNavigate();
     const tracksegmentObserver = useRef<TrackSegmentObserver>(new TrackSegmentObserver());
     const tracksegmentMaker = useRef<SegmentFactory>(new SegmentFactory("factory"));
@@ -48,7 +48,7 @@ export default function RaceTrackBuildPage():JSX.Element {
     let [creating_straightline, setCS] = React.useState(false);
     let picking_spot = React.useRef<boolean>(false);
 
-    let cameraOffset = { x: 0, y: 0 }
+    let cameraOffset = { x: -window.innerWidth / 2, y: -window.innerHeight / 2 }
     let cameraZoom = 1
     let MAX_ZOOM = 5
     let MIN_ZOOM = 0.1
@@ -80,9 +80,6 @@ export default function RaceTrackBuildPage():JSX.Element {
         canvas.addEventListener('mouseup', onPointerUp)
         canvas.addEventListener('mousemove', onPointerMove)
         canvas.addEventListener( 'wheel', (e) => adjustZoom(e, e.deltaY*SCROLL_SENSITIVITY, 0.1))
-        canvas.addEventListener('gesturestart', onGesture);
-        canvas.addEventListener('gesturechange', onGesture);
-        canvas.addEventListener('gestureend', onGesture);
         window.requestAnimationFrame( draw );
     };
     useEffect(setup, []);
@@ -94,7 +91,7 @@ export default function RaceTrackBuildPage():JSX.Element {
         // Translate to the canvas centre before zooming - so you'll always zoom on what you're looking directly at
 
         ctx.current.restore();
-        // ctx.current.translate( window.innerWidth / 2, window.innerHeight / 2 )
+        ctx.current.translate( window.innerWidth / 2, window.innerHeight / 2 )
         ctx.current.scale(cameraZoom, cameraZoom)
         ctx.current.translate(cameraOffset.x,  cameraOffset.y )
         
@@ -142,8 +139,9 @@ export default function RaceTrackBuildPage():JSX.Element {
             dragStart.x = getEventLocation(e).x/cameraZoom - cameraOffset.x
             dragStart.y = getEventLocation(e).y/cameraZoom - cameraOffset.y
         } else if (e.which == 1) {
-            let leftClickX = getEventLocation(e).x/cameraZoom - cameraOffset.x;
-            let leftClickY = getEventLocation(e).y/cameraZoom - cameraOffset.y;
+            let leftClickX = getEventLocation(e).x/cameraZoom - cameraOffset.x - (window.innerWidth / 2 / cameraZoom);
+            let leftClickY = getEventLocation(e).y/cameraZoom - cameraOffset.y - (window.innerHeight / 2 / cameraZoom);
+            console.log(leftClickX, leftClickY);
             tracksegmentObserver.current.checkSegmentControlPointClicked({x: leftClickX, y: leftClickY})
         }
     }
@@ -153,8 +151,8 @@ export default function RaceTrackBuildPage():JSX.Element {
             cameraOffset.x = getEventLocation(e).x/cameraZoom - dragStart.x
             cameraOffset.y = getEventLocation(e).y/cameraZoom - dragStart.y
         } else if (e.button == 0) {
-            let leftClickX = getEventLocation(e).x/cameraZoom - cameraOffset.x;
-            let leftClickY = getEventLocation(e).y/cameraZoom - cameraOffset.y;
+            let leftClickX = getEventLocation(e).x/cameraZoom - cameraOffset.x - (window.innerWidth / 2 / cameraZoom);
+            let leftClickY = getEventLocation(e).y/cameraZoom - cameraOffset.y - (window.innerHeight / 2 / cameraZoom);
             tracksegmentObserver.current.moveDraggedPoint(e, {x: leftClickX, y: leftClickY});
         }
     }
