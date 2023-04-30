@@ -22,6 +22,22 @@ type SegmentListDisplay = {
     editing: boolean
 }
 
+export type TrackData = {
+    curves: CurveData[];
+    scale: number
+}
+
+export type CurveData = {
+    name: string;
+    curveSegments: {
+        segmentType: string;
+        points: {
+            x: number;
+            y: number;
+        }[];
+    }[]
+}
+
 type SegmentData = {
     name: string;
     type: string;
@@ -80,6 +96,10 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
         canvas.addEventListener('mouseup', onPointerUp)
         canvas.addEventListener('mousemove', onPointerMove)
         canvas.addEventListener( 'wheel', (e) => adjustZoom(e, e.deltaY*SCROLL_SENSITIVITY, 0.1))
+        window.addEventListener('keydown', (e) => {
+            if (e.altKey) {
+                console.log("Shift to edit mode");
+            }});
         window.requestAnimationFrame( draw );
     };
     useEffect(setup, []);
@@ -282,21 +302,23 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
 
     function experiment() {
         fetch("/bezierCurve").then((res)=>{
-            
-            console.log("got response");
-            res.json().then((curves:SegmentData[])=>{
-                curves.forEach(curve => {
+            let scale = 1000;
+            res.json().then((track:TrackData)=>{
+                let curves = track.curves;
+                curves.forEach((curve)=>{
                     curve.curveSegments.forEach((segment)=>{
-                        console.log(segment);
-                        if (segment.segmentType != "straight") {
-                            tracksegmentObserver.current.addSegment(generateUUID() , tracksegmentMaker.current.createCubicBezierSegment("default", new Bezier(segment.points)));
+                        segment.points = segment.points.map((point)=>{
+                            return {x: point.x * scale, y: -point.y * scale};
+                        });
+                        if (segment.segmentType == 'cubic') {
+                            tracksegmentObserver.current.addSegment(generateUUID(), tracksegmentMaker.current.createCubicBezierSegment("default", new Bezier(segment.points)));
                         } else {
                             tracksegmentObserver.current.addSegment(generateUUID(), tracksegmentMaker.current.createStraightSegment("default", segment.points[0], segment.points[1]));
                         }
-                    })
+                    });
                 });
                 setSegmentsList(tracksegmentObserver.current.getSegmentList());
-            })
+            });
         })
     }
 
@@ -339,7 +361,7 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
                                                 // error={tankerIdFieldError}
                                                 // helperText={tankerIdFieldErrorHelperText}
                                             />:
-                                        "線段；" + segment.name}
+                                        "線段:" + segment.name}
                                     </CardContent>
                                 </CardActionArea>
                             </Card>

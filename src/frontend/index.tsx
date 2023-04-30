@@ -7,16 +7,6 @@ import RaceTrackBuildPage from './pages/RaceTrack';
 import RaceTrackBuildCircularArcPage from './pages/RaceTrack-cir-arc';
 import TJS from './pages/TJS';
 
-
-import * as THREE from 'three';
-
-// const scene = new THREE.Scene();
-
-// const camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
-
-// const renderer = new THREE.WebGLRenderer();
-// renderer.setSize( window.innerWidth, window.innerHeight );
-// document.body.appendChild( renderer.domElement );
 const Index = () => {
   return (
       <Router>
@@ -27,22 +17,6 @@ const Index = () => {
               <Route path="/buildCirArcTrack" element={<RaceTrackBuildCircularArcPage/>}/>
           </Routes> 
       </Router>
-      /** 
-      <Grid
-          container
-          spacing={0}
-          direction="column"
-          alignItems="center"
-          justifyContent="center"
-          style={{ minHeight: '100vh' }}
-      >
-          <Grid item xs={3}>
-          </Grid>   
-          
-          <Typography variant='h1' >AROW Console</Typography>
-          <Button variant="contained">Text</Button>
-      </Grid> 
-      */
   ); 
 };
 
