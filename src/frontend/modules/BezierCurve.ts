@@ -1,4 +1,5 @@
 import { GUIElement } from "./SegmentFactory";
+import { PointCal } from "point2point";
 
 type Point = {
     x: number,

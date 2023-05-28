@@ -41,6 +41,7 @@
     "p5": "^1.6.0",
     "react-router-dom": "^6.9.0",
     "three": "^0.150.1",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "point2point": "./submodules/point2point"
   }
 }
