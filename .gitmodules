@@ -1,0 +1,3 @@
+[submodule "submodules/point2point"]
+	path = submodules/point2point
+	url = git@github.com:niuee/point2point.git
