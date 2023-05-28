@@ -5,6 +5,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import {Home} from "./pages/Home";
 import RaceTrackBuildPage from './pages/RaceTrack';
 import RaceTrackBuildCircularArcPage from './pages/RaceTrack-cir-arc';
+import RaceTrackBuilder from './pages/RaceTrackBuilder';
 import TJS from './pages/TJS';
 
 const Index = () => {
@@ -15,6 +16,8 @@ const Index = () => {
               <Route path="/build_track" element={<RaceTrackBuildPage/>}/>
               <Route path="/test_page" element={<TJS/>}/>
               <Route path="/buildCirArcTrack" element={<RaceTrackBuildCircularArcPage/>}/>
+              <Route path="/buildCirArcTrack" element={<RaceTrackBuildCircularArcPage/>}/>
+              <Route path="/builder" element={<RaceTrackBuilder/>}/>
           </Routes> 
       </Router>
   ); 

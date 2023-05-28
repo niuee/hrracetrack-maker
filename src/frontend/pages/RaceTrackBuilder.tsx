@@ -5,7 +5,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Bezier, Point, Offset} from 'bezier-js';
 import { SegmentFactory, TrackSegment  } from '../modules/SegmentFactory';
 import { TrackSegmentObserver } from '../modules/TrackSegmentObserver';
+import { TrackSegmentMediator } from '../modules/BuilderPageMediator';
 import { generateUUID } from 'three/src/math/MathUtils';
+import ViewInArIcon from '@mui/icons-material/ViewInAr';
+import WidgetsOutlinedIcon from '@mui/icons-material/WidgetsOutlined';
 
 type CanvasCircle = {
     centerx: number
@@ -48,13 +51,19 @@ type SegmentData = {
     }[]
 }
 
+export enum ViewMode {
+    OBJECT = "OBJECT",
+    EDIT = "EDIT",
+}
 
-export default function RaceTrackBuildCircularArcPage():JSX.Element {
+
+export default function RaceTrackBuilder():JSX.Element {
     const navigate = useNavigate();
-    const tracksegmentObserver = useRef<TrackSegmentObserver>(new TrackSegmentObserver());
+    const tracksegmentMediator = useRef<TrackSegmentMediator>(new TrackSegmentMediator());
     const tracksegmentMaker = useRef<SegmentFactory>(new SegmentFactory("factory"));
+    const requestRef = React.useRef<number>();
     const [segmentsList, setSegmentsList] = React.useState<SegmentListDisplay[]>([]);
-
+    const [viewMode, setviewMode] = React.useState<ViewMode>(ViewMode.OBJECT);
     let start_point = React.useRef<{centerx: number, centery:number, raidus:number}>(null);
 
 
@@ -98,10 +107,13 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
         canvas.addEventListener( 'wheel', (e) => adjustZoom(e, e.deltaY*SCROLL_SENSITIVITY, 0.1))
         window.addEventListener('keydown', (e) => {
             if (e.altKey) {
-                console.log("Shift to edit mode");
-            }});
-        window.requestAnimationFrame( draw );
+                switchMode();
+            }
+        });
+        requestRef.current = requestAnimationFrame(draw);
+        return ()=>{cancelAnimationFrame(requestRef.current)}
     };
+
     useEffect(setup, []);
     
     function draw(timestamp) {
@@ -114,14 +126,16 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
         ctx.current.translate( window.innerWidth / 2, window.innerHeight / 2 )
         ctx.current.scale(cameraZoom, cameraZoom)
         ctx.current.translate(cameraOffset.x,  cameraOffset.y )
-        
+        setviewMode((curViewMode)=>{
+            tracksegmentMediator.current.drawSegments(ctx.current, curViewMode);
+            return curViewMode;
+        })
         draw_racecourse(window.innerWidth, window.innerHeight, ctx.current, racecourse_img);
-        tracksegmentObserver.current.drawSegments(ctx.current); 
         if (start_point.current != null) {
             drawCircles(ctx.current, {centerx: start_point.current.centerx, centery: start_point.current.centery, radius: start_point.current.raidus});
         }
         
-        window.requestAnimationFrame( draw )
+        requestRef.current = requestAnimationFrame(draw);
     }
 
 
@@ -136,15 +150,14 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
     }
 
     function onPointerUp(e: MouseEvent) {
-        if (e.button == 1) {
+        if (e.button == 0) {
             isDragging.current = false
             lastZoom = cameraZoom
-        } else if (e.button == 0){
             let convertCoord = getEventLocation(e);
             if (convertCoord != null){
                 let leftClickX = getEventLocation(e).x/cameraZoom - cameraOffset.x;
                 let leftClickY = getEventLocation(e).y/cameraZoom - cameraOffset.y;
-                tracksegmentObserver.current.clearDraggedControlPoint();
+                tracksegmentMediator.current.clearDraggedControlPoint();
                 if (picking_spot.current) {
                     start_point.current = {
                         centerx: leftClickX,
@@ -156,20 +169,20 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
         }
     }
 
-    function onPointerDown(e) {
+    function onPointerDown(e: MouseEvent) {
         let convertCoord = getEventLocation(e);
         if (convertCoord == null){
             return;
         }
-        if (e.which == 2) {
+        if (e.button == 0 && e.metaKey) {
             isDragging.current = true;
             dragStart.x = getEventLocation(e).x/cameraZoom - cameraOffset.x
             dragStart.y = getEventLocation(e).y/cameraZoom - cameraOffset.y
-        } else if (e.which == 1) {
+        } else if (e.button == 0) {
             let leftClickX = getEventLocation(e).x/cameraZoom - cameraOffset.x - (window.innerWidth / 2 / cameraZoom);
             let leftClickY = getEventLocation(e).y/cameraZoom - cameraOffset.y - (window.innerHeight / 2 / cameraZoom);
             console.log(leftClickX, leftClickY);
-            tracksegmentObserver.current.checkSegmentControlPointClicked({x: leftClickX, y: leftClickY})
+            tracksegmentMediator.current.checkSegmentControlPointClicked({x: leftClickX, y: leftClickY})
         }
     }
 
@@ -184,7 +197,7 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
         } else if (e.button == 0) {
             let leftClickX = getEventLocation(e).x/cameraZoom - cameraOffset.x - (window.innerWidth / 2 / cameraZoom);
             let leftClickY = getEventLocation(e).y/cameraZoom - cameraOffset.y - (window.innerHeight / 2 / cameraZoom);
-            tracksegmentObserver.current.moveDraggedPoint(e, {x: leftClickX, y: leftClickY});
+            tracksegmentMediator.current.moveDraggedPoint(e, {x: leftClickX, y: leftClickY});
         }
     }
 
@@ -209,30 +222,6 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
     }
 
     function adjustZoom(e, zoomAmount, zoomFactor) {
-        // if (e.ctrlKey) {
-        //     e.preventDefault();
-        //     e.stopImmediatePropagation();
-        //     if (zoomAmount) {
-        //         zoomAmount = -1 * zoomAmount;
-        //         cameraZoom += zoomAmount
-        //     } else if (zoomFactor) {
-        //         // console.log(zoomFactor)
-        //         cameraZoom = zoomFactor*lastZoom
-        //     }
-            
-        //     cameraOffset.x = getEventLocation(e).x / cameraZoom - cameraOffset.x;
-        //     cameraOffset.y = getEventLocation(e).y / cameraZoom - cameraOffset.y;
-        //     cameraZoom = Math.min( cameraZoom, MAX_ZOOM )
-        //     cameraZoom = Math.max( cameraZoom, MIN_ZOOM )
-        //     return;
-        //     // perform desired zoom action here
-        // } else {
-        //     cameraOffset.x += -e.deltaX/cameraZoom //+ dragStart.x
-        //     cameraOffset.y += -e.deltaY/cameraZoom //+ dragStart.y
-        //     e.preventDefault();
-        //     e.stopImmediatePropagation();
-        //     return;
-        // }
         if (!isDragging.current) {
             if (zoomAmount) {
                 cameraZoom += zoomAmount
@@ -247,43 +236,46 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
         }
     }
 
-    function onGesture(event) {
-        console.log("gesture test");
-    }
 
 
     function clickedCard(e:React.MouseEvent<HTMLButtonElement>) {
         // console.log(e.currentTarget.id);
         // console.log(segmentsMap.current.get(e.currentTarget.id));
-        tracksegmentObserver.current.clickedOnSegment(e.shiftKey, e.currentTarget.id);
-        setSegmentsList(tracksegmentObserver.current.getSegmentList());
+        if (viewMode == ViewMode.EDIT) {
+            return;
+        }
+        tracksegmentMediator.current.clickedOnSegment(e.shiftKey, e.currentTarget.id);
+        setSegmentsList(tracksegmentMediator.current.getSegmentList());
     }
 
     function doubleClickedCard(e: React.MouseEvent) {
+        if (viewMode == ViewMode.EDIT) {
+            return;
+        }
         if (e.button == 0) {
             // left double clicked
             // console.log("double clicked");
-            tracksegmentObserver.current.doubleClickedOnSegment(e.currentTarget.id);
-            setSegmentsList(tracksegmentObserver.current.getSegmentList());
+            tracksegmentMediator.current.doubleClickedOnSegment(e.currentTarget.id);
+            setSegmentsList(tracksegmentMediator.current.getSegmentList());
         }
     }
 
     function onClickdeleteSelectedSegments() {
-        if (tracksegmentObserver.current.getSelectedSegmentSize() == 0) {
+        if (tracksegmentMediator.current.getSelectedSegmentSize() == 0) {
             alert("沒有選取的線段");
             // console.log("Nothing to be deleted")
             return
         }
-        tracksegmentObserver.current.deleteSelectedSegment();
-        setSegmentsList(tracksegmentObserver.current.getSegmentList());
+        tracksegmentMediator.current.deleteSelectedSegment();
+        setSegmentsList(tracksegmentMediator.current.getSegmentList());
     }
 
 
     function onClickAppendStraightline() {
         let startPoint:Point = {x: 500, y: 500};
         let endPoint:Point = {x: 500 + 200, y:500};
-        tracksegmentObserver.current.addSegment(Date.now().toString(), tracksegmentMaker.current.createStraightSegment("default", startPoint, endPoint));
-        setSegmentsList(tracksegmentObserver.current.getSegmentList());
+        tracksegmentMediator.current.addSegment(Date.now().toString(), tracksegmentMaker.current.createStraightSegment("default", startPoint, endPoint));
+        setSegmentsList(tracksegmentMediator.current.getSegmentList());
     }
 
     function onClickAppendCurve(e: React.MouseEvent<HTMLButtonElement>) {
@@ -291,14 +283,14 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
         let yoffset = window.innerHeight / 2;
         let scaleUp = 100;
         let curve = new Bezier({x: xoffset + -1 * scaleUp, y: yoffset + 0*scaleUp}, {x: xoffset + -0.5*scaleUp, y: yoffset + 0.5*scaleUp}, {x: xoffset + 2*scaleUp, y: yoffset + 0*scaleUp}, {x: xoffset + 1*scaleUp, y: yoffset + 0*scaleUp});
-        tracksegmentObserver.current.addSegment(Date.now().toString(), tracksegmentMaker.current.createCubicBezierSegment("default", curve));
-        setSegmentsList(tracksegmentObserver.current.getSegmentList());
+        tracksegmentMediator.current.addSegment(Date.now().toString(), tracksegmentMaker.current.createCubicBezierSegment("default", curve));
+        setSegmentsList(tracksegmentMediator.current.getSegmentList());
     }
 
     function onTextFieldBlur(e: React.FocusEvent<HTMLInputElement>){
         // console.log("Text field out of focus");
-        tracksegmentObserver.current.clearEditingStatus();
-        setSegmentsList(tracksegmentObserver.current.getSegmentList());
+        tracksegmentMediator.current.clearEditingStatus();
+        setSegmentsList(tracksegmentMediator.current.getSegmentList());
     }
 
     function onTextFieldFocus(e: React.FocusEvent<HTMLInputElement>) {}
@@ -307,7 +299,7 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
         if (e.target.value == "") {
             return
         } else {
-            tracksegmentObserver.current.renameSegment(segmentIdent, e.target.value);
+            tracksegmentMediator.current.renameSegment(segmentIdent, e.target.value);
         }
     }
 
@@ -322,13 +314,13 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
                             return {x: point.x * scale, y: -point.y * scale};
                         });
                         if (segment.segmentType == 'cubic') {
-                            tracksegmentObserver.current.addSegment(generateUUID(), tracksegmentMaker.current.createCubicBezierSegment("default", new Bezier(segment.points)));
+                            tracksegmentMediator.current.addSegment(generateUUID(), tracksegmentMaker.current.createCubicBezierSegment("default", new Bezier(segment.points)));
                         } else {
-                            tracksegmentObserver.current.addSegment(generateUUID(), tracksegmentMaker.current.createStraightSegment("default", segment.points[0], segment.points[1]));
+                            tracksegmentMediator.current.addSegment(generateUUID(), tracksegmentMaker.current.createStraightSegment("default", segment.points[0], segment.points[1]));
                         }
                     });
                 });
-                setSegmentsList(tracksegmentObserver.current.getSegmentList());
+                setSegmentsList(tracksegmentMediator.current.getSegmentList());
             });
         })
     }
@@ -348,6 +340,15 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
         }
     } 
 
+    function switchMode() {
+        setviewMode((curMode)=>{
+            if (curMode == ViewMode.OBJECT) {
+                return ViewMode.EDIT
+            } else {
+                return ViewMode.OBJECT
+            }
+        });
+    }
 
 
     return (
@@ -355,7 +356,7 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
             <canvas id="canvas" style={{position:'absolute', top: 0, left: 0, width: "100%", height:"100vh", margin: "none"}}></canvas>
             <img id="racecourse_overlay" style={{display: "none"}} src={`data:image/jpeg;base64,${imgString}`} alt="racecourse" />
 
-            <Stack alignItems={'center'} spacing={2}style={{position:"absolute", margin:"50px", width: "10vw"}} >
+            <Stack alignItems={'center'} spacing={2}style={{position: "absolute", margin:"50px", width: "10vw"}} >
                 <div>
                     <Button onClick={()=>{navigate("/")}} variant="contained">回到首頁</Button>
                 </div>
@@ -373,41 +374,51 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
                         hidden
                     />
                 </Button>
-                <Button  onClick={() => {setSelectedImage(null)}} variant="contained" >重設成預設賽到底圖</Button>
+                <Button  onClick={() => {setSelectedImage(null)}} variant="contained" >重設成預設賽道底圖</Button>
             </Stack>
-            <Card sx={{ maxWidth: 345 }} style={{position:"absolute", top: 100, left: "80vw", width: "10vw", maxHeight:"40vh", overflowY:"scroll", opacity: 0.5}} >
-                <Stack spacing={1} style={{width: "100%"}}>
+            <Stack alignItems={'center'} spacing={2}style={{position:"absolute", top: 100, left: "80vw", width: "10vw" }} >
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                }}>
+                    {viewMode == ViewMode.OBJECT? <ViewInArIcon />: <WidgetsOutlinedIcon/>}   
+                    <span>  {viewMode} 模式</span>
+                </div>  
+                <Card sx={{ maxWidth: 345 }} style={{width: "10vw", maxHeight:"40vh", overflowY:"scroll", opacity: 0.5}}>
+                    <Stack spacing={1} style={{width: "100%"}}>
 
-                    {segmentsList.map((segment)=>{
-                        return (
-                            <Card style={{width: "100%", background: segment.selected? "#47e664": "white"}} key={segment.ident}>
-                                <CardActionArea id={segment.ident} onClick={clickedCard} onDoubleClick={doubleClickedCard}>
-                                    <CardContent style={{textAlign: 'center'}}>
-                                        { segment.editing? 
-                                            <TextField
-                                                fullWidth
-                                                required
-                                                label="線段名稱"
-                                                id={segment.ident+"Name"}
-                                                sx={{ mt: 1, /*width: '25ch'*/ }}
-                                                variant="filled"
-                                                InputProps={{
-                                                    inputProps: {min:0}
-                                                }}
-                                                onChange={(e:React.ChangeEvent<HTMLInputElement>)=>{onSegmentNameChange(e, segment.ident)}}
-                                                onBlur={onTextFieldBlur}
-                                                onFocus={onTextFieldFocus}
-                                                // error={tankerIdFieldError}
-                                                // helperText={tankerIdFieldErrorHelperText}
-                                            />:
-                                        "線段:" + segment.name}
-                                    </CardContent>
-                                </CardActionArea>
-                            </Card>
-                        );
-                    })}
-                </Stack>
-            </Card>
+                        {segmentsList.map((segment)=>{
+                            return (
+                                <Card style={{width: "100%", background: segment.selected? "#47e664": "white"}} key={segment.ident}>
+                                    <CardActionArea id={segment.ident} onClick={clickedCard} onDoubleClick={doubleClickedCard}>
+                                        <CardContent style={{textAlign: 'center'}}>
+                                            { segment.editing? 
+                                                <TextField
+                                                    fullWidth
+                                                    required
+                                                    label="線段名稱"
+                                                    id={segment.ident+"Name"}
+                                                    sx={{ mt: 1, /*width: '25ch'*/ }}
+                                                    variant="filled"
+                                                    InputProps={{
+                                                        inputProps: {min:0}
+                                                    }}
+                                                    onChange={(e:React.ChangeEvent<HTMLInputElement>)=>{onSegmentNameChange(e, segment.ident)}}
+                                                    onBlur={onTextFieldBlur}
+                                                    onFocus={onTextFieldFocus}
+                                                    // error={tankerIdFieldError}
+                                                    // helperText={tankerIdFieldErrorHelperText}
+                                                />:
+                                            "線段:" + segment.name}
+                                        </CardContent>
+                                    </CardActionArea>
+                                </Card>
+                            );
+                        })}
+                    </Stack>
+                </Card>
+            </Stack>
         </div>
     )
 }

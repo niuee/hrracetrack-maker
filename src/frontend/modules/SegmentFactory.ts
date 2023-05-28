@@ -5,7 +5,7 @@ import { start } from "repl";
 
 
 
-abstract class GUIElement {
+export abstract class GUIElement {
     abstract draw(context: CanvasRenderingContext2D): void;
 }
 
