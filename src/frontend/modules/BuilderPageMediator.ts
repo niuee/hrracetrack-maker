@@ -197,13 +197,31 @@ export class TrackCurveMediator {
         this.grabbedPoint.pointType = null;
     }
 
-    handleGrab(viewMode: ViewMode, shiftPressed: boolean, cursorPositionDiff: {x: number, y: number}): void {
+    handleGrab(viewMode: ViewMode, shiftPressed: boolean, cursorPositionDiff: {x: number, y: number}, snapEnabled=false): void {
         if (viewMode == ViewMode.EDIT) {
             if (this.grabbedPoint.ident != null) {
                 let curveOfInterest = this.curveMap.get(this.grabbedPoint.ident);
                 cursorPositionDiff = PointCal.transform2NewAxis(cursorPositionDiff, curveOfInterest.curve.orientationAngle);
                 let destPos = PointCal.addVector(this.grabbedPoint.lastPos, cursorPositionDiff);
-                curveOfInterest.curve.moveControlPoint(destPos, this.grabbedPoint.pointIndex, this.grabbedPoint.pointType)
+                let snapCandidate =  {hit: false, coord: null};
+                this.curveMap.forEach((curveItem, ident)=>{
+                    if (curveItem.selected) {
+                        let res = curveItem.curve.clickedOnPoint(this.curveMap.get(this.grabbedPoint.ident).curve.transformPoint(destPos));
+                        if (res.hit && !snapCandidate.hit) {
+                            if (this.grabbedPoint.ident == ident && this.grabbedPoint.pointIndex == res.pointIndex && this.grabbedPoint.pointType == res.pointType){
+                                return;
+                            }
+                            snapCandidate.hit = true;
+                            snapCandidate.coord = PointCal.subVector(res.pointPos, this.curveMap.get(this.grabbedPoint.ident).curve.anchorPoint);
+                            console.log("Snapping hit something");
+                        }
+                    }
+                });
+                if (snapCandidate.hit && snapEnabled) {
+                    curveOfInterest.curve.moveControlPoint(snapCandidate.coord, this.grabbedPoint.pointIndex, this.grabbedPoint.pointType)
+                } else {
+                    curveOfInterest.curve.moveControlPoint(destPos, this.grabbedPoint.pointIndex, this.grabbedPoint.pointType)
+                }
             }
         } else if (viewMode == ViewMode.OBJECT) {
             this.getSelectedCurveList().forEach((ident)=>{
@@ -303,7 +321,9 @@ export class TrackCurveMediator {
 
     extendSelectedCurves(prepend=false): void {
         this.curveMap.forEach((curveItem)=>{
-            curveItem.curve.extendControlPoint(prepend);
+            if (curveItem.selected){
+                curveItem.curve.extendControlPoint(prepend);
+            }
         });
     }
 

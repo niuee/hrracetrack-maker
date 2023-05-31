@@ -280,7 +280,8 @@ export class BezierCurve implements GUIElement {
         this.updatePointsCoordinates();
     }
 
-    clickedOnPoint(cursorPosition: Point): {hit: boolean, pointIndex: number, pointType: string} {
+    clickedOnPoint(cursorPosition: Point): {hit: boolean, pointIndex: number, pointType: string, pointPos: Point} {
+        this.updatePointsCoordinates();
         let res = this.controlPoints.findIndex((controlPoint) => {
             let close = PointCal.distanceBetweenPoints(controlPoint.transformedCoord, cursorPosition) < 5 || 
                         PointCal.distanceBetweenPoints(controlPoint.left_handle.transformedCoord, cursorPosition) < 5 || 
@@ -290,21 +291,21 @@ export class BezierCurve implements GUIElement {
         if (res != -1) {
             let controlPointInQuestion = this.controlPoints[res];
             if (PointCal.distanceBetweenPoints(controlPointInQuestion.transformedCoord, cursorPosition) < 5){
-                return {hit: true, pointIndex: res, pointType: "cp"};
+                return {hit: true, pointIndex: res, pointType: "cp", pointPos: controlPointInQuestion.transformedCoord};
             }
             if (PointCal.distanceBetweenPoints(controlPointInQuestion.left_handle.transformedCoord, cursorPosition) < 5){
                 console.log(controlPointInQuestion.left_handle.handleType)
-                return {hit: true, pointIndex: res, pointType: "lh"};
+                return {hit: true, pointIndex: res, pointType: "lh", pointPos: controlPointInQuestion.left_handle.transformedCoord};
             }
             if (PointCal.distanceBetweenPoints(controlPointInQuestion.right_handle.transformedCoord, cursorPosition) < 5){
                 console.log(controlPointInQuestion.right_handle.handleType)
-                return {hit: true, pointIndex: res, pointType: "rh"};
+                return {hit: true, pointIndex: res, pointType: "rh", pointPos:controlPointInQuestion.right_handle.transformedCoord};
             }
         }
-        return {hit:false, pointIndex: -1, pointType: null};
+        return {hit:false, pointIndex: -1, pointType: null, pointPos: null};
     }
 
-    private transformPoint(point: Point): Point {
+    transformPoint(point: Point): Point {
         point = PointCal.rotatePoint(point, this.orientationAngle);
         point = PointCal.addVector(point, this.anchorPoint);
         return point;

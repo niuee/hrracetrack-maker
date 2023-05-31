@@ -74,6 +74,7 @@ export default function RaceTrackBuilder():JSX.Element {
     const trackCurveMediator = useRef<TrackCurveMediator>(new TrackCurveMediator());
     const [curvesList, setCurveList] = React.useState<CurveListDisplay[]>([]);
     const [viewMode, setviewMode] = React.useState<ViewMode>(ViewMode.OBJECT);
+    const [snapEnabled, setSnapStatus] = React.useState<boolean>(true);
     const modeRef = React.useRef<ViewMode>(ViewMode.OBJECT);
     const grabEngagedRef = React.useRef<boolean>(false);
     const grabEngagedCursorPosRef = React.useRef<{x: number, y: number}>(null);
@@ -239,7 +240,7 @@ export default function RaceTrackBuilder():JSX.Element {
                             console.log("Grabbing in session for grabbed point(s)");
                             let cursorPosDiff = PointCal.subVector(cursorPosRef.current, grabEngagedCursorPosRef.current);
                             console.log("cursorDiff:", cursorPosDiff);
-                            trackCurveMediator.current.handleGrab(modeRef.current,e.shiftKey, cursorPosDiff);
+                            trackCurveMediator.current.handleGrab(modeRef.current,e.shiftKey, cursorPosDiff, snapEnabled);
                         } else {
                             console.log("No known position of the cursor when grab mode is engaged");
                             grabEngagedCursorPosRef.current = cursorPosRef.current;
@@ -253,7 +254,7 @@ export default function RaceTrackBuilder():JSX.Element {
                     console.log("Grabbing in session for entire curve(s)");
                     let cursorPosDiff = PointCal.subVector(cursorPosRef.current, grabEngagedCursorPosRef.current);
                     console.log("cursorDiff:", cursorPosDiff);
-                    trackCurveMediator.current.handleGrab(modeRef.current, e.shiftKey, cursorPosDiff);
+                    trackCurveMediator.current.handleGrab(modeRef.current, e.shiftKey, cursorPosDiff, snapEnabled);
                 }
             }
         } 
