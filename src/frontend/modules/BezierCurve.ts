@@ -477,9 +477,9 @@ export class BezierCurve implements GUIElement {
                 newCoord = this.anchorPoint;
             }
             newControlPoint.coord = newCoord; 
-            newControlPoint.left_handle.coord = PointCal.addVector(newControlPoint.coord, {x: -10, y: 0});
+            newControlPoint.left_handle.coord = PointCal.addVector(newControlPoint.coord, {x: -200, y: 0});
             newControlPoint.left_handle.handleType = HandleType.ALIGNED;
-            newControlPoint.right_handle.coord = PointCal.addVector(newControlPoint.coord, {x: 10, y: 0});
+            newControlPoint.right_handle.coord = PointCal.addVector(newControlPoint.coord, {x: 200, y: 0});
             newControlPoint.right_handle.handleType = HandleType.ALIGNED;
             this.controlPoints.unshift(newControlPoint);
         } else {
@@ -492,9 +492,9 @@ export class BezierCurve implements GUIElement {
                 newCoord = this.anchorPoint;
             }
             newControlPoint.coord = newCoord; 
-            newControlPoint.left_handle.coord = PointCal.addVector(newControlPoint.coord, {x: -10, y: 0});
+            newControlPoint.left_handle.coord = PointCal.addVector(newControlPoint.coord, {x: -200, y: 0});
             newControlPoint.left_handle.handleType = HandleType.ALIGNED;
-            newControlPoint.right_handle.coord = PointCal.addVector(newControlPoint.coord, {x: 10, y: 0});
+            newControlPoint.right_handle.coord = PointCal.addVector(newControlPoint.coord, {x: 200, y: 0});
             newControlPoint.right_handle.handleType = HandleType.ALIGNED;
             this.controlPoints.push(newControlPoint);
         }
