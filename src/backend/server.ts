@@ -23,16 +23,16 @@ export type CurveData = {
     }[]
 }
 
-let jsonData: TrackData;
+// let jsonData: TrackData;
 // Read the JSON file
-fs.readFile(path.join(__dirname, '/bezier_curves_2.json'), 'utf8').then((data) => {
+// fs.readFile(path.join(__dirname, '/bezier_curves_2.json'), 'utf8').then((data) => {
   
-    // Parse the JSON data
-    jsonData = JSON.parse(data) as TrackData;
-    // Do something with the JSON data
-}).catch((reason)=>{
-    console.log(reason);
-});
+//     // Parse the JSON data
+//     jsonData = JSON.parse(data) as TrackData;
+//     // Do something with the JSON data
+// }).catch((reason)=>{
+//     console.log(reason);
+// });
 
 
 const app = express();
@@ -41,9 +41,9 @@ const app = express();
 app.use(express.static(path.resolve(__dirname, "..")));
 
 
-app.get("/bezierCurve", (req, res)=>{
-    res.status(200).send(JSON.stringify(jsonData));
-})
+// app.get("/bezierCurve", (req, res)=>{
+//     res.status(200).send(JSON.stringify(jsonData));
+// })
 
 // Handles any requests that don't match the ones above
 app.get('*', (req,res) =>{
