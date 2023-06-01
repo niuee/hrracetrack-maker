@@ -55,6 +55,7 @@ export class TrackCurveMediator {
         deleteList.forEach((ident)=>{
             this.deleteCurve(ident);
         })
+        this.releaseGrabbedPoint();
     }
 
     getCurveList(): {ident: string, name: string, selected: boolean, beingEdited: boolean}[] {
@@ -334,6 +335,20 @@ export class TrackCurveMediator {
             console.log("Size of arclengths:", arcLengths.length);
             console.log("Full length of the curve:", fullArcLength);
         })
+    }
+
+    getGrabbedPointPos(){
+        if (this.hasGrabbedPoint() && this.curveMap.has(this.grabbedPoint.ident)) {
+            let cpOfInterest = this.curveMap.get(this.grabbedPoint.ident).curve.controlPoints[this.grabbedPoint.pointIndex];
+            if (this.grabbedPoint.pointType == "cp") {
+                return cpOfInterest.transformedCoord;
+            } else if (this.grabbedPoint.pointType == "lh") {
+                return cpOfInterest.left_handle.transformedCoord;
+            } else if (this.grabbedPoint.pointType == "rh") {
+                return cpOfInterest.right_handle.transformedCoord;
+            }
+        }
+        return null
     }
     
 }

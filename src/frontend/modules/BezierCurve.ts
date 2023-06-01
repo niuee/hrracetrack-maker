@@ -2,7 +2,7 @@ import { GUIElement } from "./SegmentFactory";
 import { PointCal} from "point2point";
 import { Bezier } from "bezier-js";
 
-type Point = {
+export type Point = {
     x: number,
     y: number,
     z?: number
@@ -342,15 +342,15 @@ export class BezierCurve implements GUIElement {
             let startPoint = point;
             let endPoint = this.controlPoints[index + 1];
             
+            let bCurve = new Bezier([startPoint.transformedCoord, startPoint.right_handle.transformedCoord, endPoint.left_handle.transformedCoord, endPoint.transformedCoord]);
+            let {arcLengths, fullArcLength} = this.getArcLengths(bCurve);
 
             // NOTE Below is the direction section
             if (withDirection) {
-                let bCurve = new Bezier([startPoint.transformedCoord, startPoint.right_handle.transformedCoord, endPoint.left_handle.transformedCoord, endPoint.transformedCoord]);
-                let {arcLengths, fullArcLength} = this.getArcLengths(bCurve);
                 if (selected) {
                     context.strokeStyle = "rgb(255, 79, 79)";
                 }
-                for (let percentage=0; percentage <= 100; percentage += 25) {
+                for (let percentage=0; percentage <= 75; percentage += 25) {
                     let tVal = this.mapPercentage2TVal(percentage, arcLengths, fullArcLength, this.mapIndex2TVal);
                     let arrowPos = bCurve.get(tVal);
                     let arrowDirection = PointCal.unitVector(bCurve.derivative(tVal));
@@ -373,8 +373,19 @@ export class BezierCurve implements GUIElement {
                 context.strokeStyle = "rgb(0, 0, 0)";
 
             }
-
             // NOTE Above is the direction section
+
+            // NOTE Below is the length text section
+            let tVal = this.mapPercentage2TVal(25, arcLengths, fullArcLength, this.mapIndex2TVal);
+            let lengthTextPos = bCurve.get(tVal);
+            let offsetDirection = PointCal.rotatePoint(PointCal.unitVector(bCurve.derivative(tVal)), Math.PI / 2);
+            let arcLengthPos = PointCal.addVector(lengthTextPos, PointCal.multiplyVectorByScalar(offsetDirection, 50));
+            context.beginPath();
+            context.font = "30px Noto Sans";
+            context.fillText(`Arc Length ${fullArcLength.toFixed(3)}`, arcLengthPos.x, arcLengthPos.y);
+            context.strokeStyle = "rgb(0, 0, 0)";
+            // NOTE Above is the length text section
+
             context.beginPath();
             let firstHandle = startPoint.right_handle.transformedCoord;
             let secondHandle = endPoint.left_handle.transformedCoord;
@@ -384,6 +395,9 @@ export class BezierCurve implements GUIElement {
                 context.strokeStyle = "rgb(255, 79, 79)";
             }
             context.stroke();
+            if (selected) {
+                context.strokeStyle = "rgb(255, 79, 79)";
+            }
             context.strokeStyle = "rgb(0, 0, 0)";
         });
     }
