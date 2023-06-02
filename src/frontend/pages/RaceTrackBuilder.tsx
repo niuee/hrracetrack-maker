@@ -139,6 +139,7 @@ export default function RaceTrackBuilder():JSX.Element {
             }
             
         });
+
         requestRef.current = requestAnimationFrame(draw);
         return ()=>{cancelAnimationFrame(requestRef.current)}
     };
@@ -286,17 +287,45 @@ export default function RaceTrackBuilder():JSX.Element {
     }
 
     function adjustZoom(e, zoomAmount, zoomFactor) {
-        if (!isDragging.current) {
-            if (zoomAmount) {
-                cameraZoom += zoomAmount
-            } else if (zoomFactor) {
-                // console.log(zoomFactor)
-                cameraZoom = zoomFactor*lastZoom
+        if (e.ctrlKey){
+            console.log("Wheel with control key");
+            e.preventDefault();
+            if (!isDragging.current) {
+                if (zoomAmount) {
+                    cameraZoom -= zoomAmount* 5;
+                } else if (zoomFactor) {
+                    // console.log(zoomFactor)
+                    cameraZoom = zoomFactor*lastZoom
+                }
+                
+                cameraZoom = Math.min( cameraZoom, MAX_ZOOM )
+                cameraZoom = Math.max( cameraZoom, MIN_ZOOM )
+                // console.log(zoomAmount)
             }
-            
-            cameraZoom = Math.min( cameraZoom, MAX_ZOOM )
-            cameraZoom = Math.max( cameraZoom, MIN_ZOOM )
-            // console.log(zoomAmount)
+            return;
+        } 
+        
+        var isTouchPad = e.wheelDeltaY ? e.wheelDeltaY === -3 * e.deltaY : e.deltaMode === 0
+        // your code
+        console.log("From" + isTouchPad? "touchpad" : "mouse");
+
+        if (isTouchPad) {
+            e.preventDefault();
+            cameraOffset.x -= e.deltaX / cameraZoom;
+            cameraOffset.y -= e.deltaY / cameraZoom;
+        } else {
+            if (!isDragging.current) {
+                if (zoomAmount) {
+                    cameraZoom += zoomAmount
+                } else if (zoomFactor) {
+                    // console.log(zoomFactor)
+                    cameraZoom = zoomFactor*lastZoom
+                }
+                
+                cameraZoom = Math.min( cameraZoom, MAX_ZOOM )
+                cameraZoom = Math.max( cameraZoom, MIN_ZOOM )
+                // console.log(zoomAmount)
+            }
         }
     }
 
