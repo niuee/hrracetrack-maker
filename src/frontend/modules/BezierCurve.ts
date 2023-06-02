@@ -26,53 +26,62 @@ type ControlPoint = {
     right_handle: HandlePoint
 }
 
+type BezierCurveArg = {
+    anchorPoint?: Point,
+    controlPoints?: ControlPoint[],
+    orientationAngle?: number,
+    scale?: number,
+}
+
+const defaultControlPoints = [
+    {   
+        coord: {x: 0, y: 0}, 
+        transformedCoord: {x: 0, y: 0}, 
+        left_handle: {
+            coord: {x: -100, y: 0}, 
+            transformedCoord: {x: -100, y: 0}, 
+            handleType: HandleType.ALIGNED
+        }, 
+        right_handle: {
+            coord:  {x: 100, y: 0},
+            transformedCoord: {x: 100, y: 0},
+            handleType: HandleType.ALIGNED
+        }
+    },
+    {   
+        coord: {x: 400, y: 0}, 
+        transformedCoord: {x: 400, y: 0}, 
+        left_handle: {
+            coord: {x: 300, y: 0}, 
+            transformedCoord: {x: 300, y: 0}, 
+            handleType: HandleType.ALIGNED
+        }, 
+        right_handle: {
+            coord:  {x: 500, y: 0},
+            transformedCoord: {x: 500, y: 0},
+            handleType: HandleType.VECTOR
+        }
+    }
+];
+
 export class BezierCurve implements GUIElement {
 
     anchorPoint: Point;
     controlPoints: ControlPoint[];
     orientationAngle: number; // this is in radians
+    fullCurveLength: number;
+    scale: number;
     
 
-    constructor(anchorPoint = {x: 0, y: 0}, controlPoints?: ControlPoint[], orientationAngle=0) {
-        if (controlPoints){
-            this.controlPoints = controlPoints;
-        } else {
-            this.controlPoints = [
-                {   
-                    coord: {x: 0, y: 0}, 
-                    transformedCoord: {x: 0, y: 0}, 
-                    left_handle: {
-                        coord: {x: -100, y: 0}, 
-                        transformedCoord: {x: -100, y: 0}, 
-                        handleType: HandleType.ALIGNED
-                    }, 
-                    right_handle: {
-                        coord:  {x: 100, y: 0},
-                        transformedCoord: {x: 100, y: 0},
-                        handleType: HandleType.ALIGNED
-                    }
-                },
-                {   
-                    coord: {x: 400, y: 0}, 
-                    transformedCoord: {x: 400, y: 0}, 
-                    left_handle: {
-                        coord: {x: 300, y: 0}, 
-                        transformedCoord: {x: 300, y: 0}, 
-                        handleType: HandleType.ALIGNED
-                    }, 
-                    right_handle: {
-                        coord:  {x: 500, y: 0},
-                        transformedCoord: {x: 500, y: 0},
-                        handleType: HandleType.VECTOR
-                    }
-                }];
-        }
+    constructor({anchorPoint={x: 0, y: 0}, controlPoints=JSON.parse(JSON.stringify(defaultControlPoints)), orientationAngle=0, scale=1}: BezierCurveArg) {
+        this.controlPoints = controlPoints;
         this.anchorPoint = anchorPoint;
         this.orientationAngle = orientationAngle;
-
+        this.scale = scale;
     }
 
     updatePointsCoordinates():void {
+        this.fullCurveLength = 0;
         this.controlPoints.forEach((controlPoint, index) => {
             if (controlPoint.left_handle.handleType == HandleType.VECTOR) {
                 if (index > 0) {
@@ -105,11 +114,18 @@ export class BezierCurve implements GUIElement {
                     controlPoint.right_handle.coord = destPos;
                 }
 
-            }
+            }           
 
             controlPoint.transformedCoord = this.transformPoint(controlPoint.coord);
             controlPoint.left_handle.transformedCoord = this.transformPoint(controlPoint.left_handle.coord);
             controlPoint.right_handle.transformedCoord = this.transformPoint(controlPoint.right_handle.coord);
+            if (index > 0) {
+                let startPoint = this.controlPoints[index - 1];
+                let endPoint = controlPoint;
+                let bCurve = new Bezier([startPoint.transformedCoord, startPoint.right_handle.transformedCoord, endPoint.left_handle.transformedCoord, endPoint.transformedCoord]);
+                let {arcLengths, fullArcLength} =  this.getArcLengths(bCurve);
+                this.fullCurveLength += fullArcLength;
+            }
         });
     }
 
@@ -374,7 +390,7 @@ export class BezierCurve implements GUIElement {
             let arcLengthPos = PointCal.addVector(lengthTextPos, PointCal.multiplyVectorByScalar(offsetDirection, 50));
             context.beginPath();
             context.font = "30px Noto Sans";
-            context.fillText(`Arc Length ${fullArcLength.toFixed(3)}`, arcLengthPos.x, arcLengthPos.y);
+            context.fillText(`Arc Length ${(fullArcLength * this.scale).toFixed(3)}`, arcLengthPos.x, arcLengthPos.y);
             context.strokeStyle = "rgb(0, 0, 0)";
             // NOTE Above is the length text section
 
@@ -508,7 +524,7 @@ export class BezierCurve implements GUIElement {
         this.updatePointsCoordinates();
     }
 
-    getArcLengths(bCurve: Bezier): {arcLengths: number[], fullArcLength: number} {
+    private getArcLengths(bCurve: Bezier): {arcLengths: number[], fullArcLength: number} {
         let arcLengths = [];
         let arcLength = 0;
         let curPoint = bCurve.get(0);
@@ -521,6 +537,22 @@ export class BezierCurve implements GUIElement {
         }
 
         return {arcLengths: arcLengths, fullArcLength: arcLength};
+    }
+
+    getLength(): number {
+        return this.fullCurveLength;
+    }
+
+    setScale(scale: number){
+        this.scale = scale;
+    }
+
+    deleteSelectedControlPoint(controlPointIndex: number):boolean {
+        if (controlPointIndex < 0 || controlPointIndex >= this.controlPoints.length) {
+            return false;
+        }
+        this.controlPoints.splice(controlPointIndex, 1);
+        return true;
     }
 
     mapPercentage2TVal(percentage: number, arcLengths: number [], fullArcLength: number, mapIndex2TVal: (index: number) => number): number {

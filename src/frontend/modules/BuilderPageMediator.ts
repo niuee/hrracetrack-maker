@@ -40,10 +40,10 @@ export class TrackCurveMediator {
     private curveBeingEdited: {editing: boolean, ident: string} = {editing: false, ident: null};
     private selectedCurveLastPos: Map<string, Point> = new Map<string, Point>();
     private grabbedPoint: {ident: string, pointIndex: number, pointType: string, lastPos: Point} = {ident: null, pointIndex: null, pointType: null, lastPos: null};
+    private scale: number = 1;
     private operationStack: {operationType: OperationType, targetIdent: string };
 
     constructor(){
-        
     }
 
     addCurve(ident: string, curve: BezierCurve): void {
@@ -331,9 +331,6 @@ export class TrackCurveMediator {
     testOnSelectedCurves(){
         this.curveMap.forEach((curveItem)=>{
             let tempBCurve = new Bezier(150,40 , 80,30 , 105,150);
-            let {arcLengths, fullArcLength} = curveItem.curve.getArcLengths(tempBCurve);
-            console.log("Size of arclengths:", arcLengths.length);
-            console.log("Full length of the curve:", fullArcLength);
         })
     }
 
@@ -350,6 +347,50 @@ export class TrackCurveMediator {
         }
         return null
     }
+
+    calculateScale():boolean {
+        let setScale = false;
+        this.curveMap.forEach((curveItem)=>{
+            if (curveItem.name === "SCALE" && !setScale) {
+                let length = curveItem.curve.getLength();
+                this.scale = 100 / length;
+                this.setCurveScale(100 / length);
+                setScale = true;
+            }
+        });
+        return setScale;
+    }
+
+    setCurveScale(scale: number){
+        this.curveMap.forEach((curveItem)=>{
+            curveItem.curve.setScale(scale);
+        })
+    }
+
+
+    deleteGrabbedPoint():boolean{
+        if (this.hasGrabbedPoint() && this.curveMap.has(this.grabbedPoint.ident) && this.grabbedPoint.pointType == "cp") {
+            let curveItem = this.curveMap.get(this.grabbedPoint.ident);
+            if (curveItem.curve.deleteSelectedControlPoint(this.grabbedPoint.pointIndex)) {
+                this.releaseGrabbedPoint();
+                return true;
+            }
+            return false;
+        } else {
+            return false;
+        }
+    }
+
+    deselectAllCurves(){
+        this.curveMap.forEach((curveItem)=>{
+            curveItem.selected = false;
+        })
+    }
+
+    getScale(){
+        return this.scale;
+    }
+
     
 }
 

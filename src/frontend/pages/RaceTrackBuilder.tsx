@@ -135,12 +135,13 @@ export default function RaceTrackBuilder():JSX.Element {
                     trackCurveMediator.current.revertPointToPrevPos();
                 }
                 disengageGrab();
-            } else if (e.code == "KeyA" && e.shiftKey) {
+            } else if (e.code == "KeyA" && e.ctrlKey) {
                 let uuid = generateUUID();
-                trackCurveMediator.current.addCurve(uuid, new BezierCurve(cursorPosRef.current));
+                trackCurveMediator.current.addCurve(uuid, new BezierCurve({anchorPoint: cursorPosRef.current, scale: trackCurveMediator.current.getScale()}));
                 if (modeRef.current == ViewMode.EDIT) {
                     switchMode();
                 }
+                trackCurveMediator.current.deselectAllCurves();
                 trackCurveMediator.current.selectCurve(uuid);
                 engageGrab();
             }
@@ -430,7 +431,7 @@ export default function RaceTrackBuilder():JSX.Element {
     }
 
     function onClickAppendCurve(){
-        trackCurveMediator.current.addCurve(generateUUID(), new BezierCurve());
+        trackCurveMediator.current.addCurve(generateUUID(), new BezierCurve({scale: trackCurveMediator.current.getScale()}));
         setCurveList(trackCurveMediator.current.getCurveList());
     }
 
@@ -447,16 +448,8 @@ export default function RaceTrackBuilder():JSX.Element {
         trackCurveMediator.current.changeGrabbedHandle2Type(type);
     }
 
-    function onClickSetOrigin(){
-        if (grabEngagedRef.current){
-            trackCurveMediator.current.revertCurveToPrevPos();
-            trackCurveMediator.current.revertPointToPrevPos();
-            disengageGrab(); 
-        }
-        pickingOrigin.current = true;
-    }
 
-    function setOrigin(){
+    function onClickSetOrigin(){
         if (trackCurveMediator.current.hasGrabbedPoint()) {
             let pos = trackCurveMediator.current.getGrabbedPointPos();
             if (pos != null){
@@ -468,6 +461,18 @@ export default function RaceTrackBuilder():JSX.Element {
             }
         } else {
             alert("目前沒有選取點當作原點座標");
+        }
+    }
+
+    function onClickSetScale(){
+        if (!trackCurveMediator.current.calculateScale()){
+            alert("請設置一個名字為\"SCALE\"的曲線");
+        }
+    }
+
+    function onClickDeletePoint(){
+        if (!trackCurveMediator.current.deleteGrabbedPoint()){
+            alert("無法刪除所選取之節點");
         }
     }
 
@@ -483,7 +488,9 @@ export default function RaceTrackBuilder():JSX.Element {
                 </div>
                 <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickdeleteSelectedSegments} variant="contained">刪除選取的線段</Button>
                 <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickAppendCurve} variant="contained">新增曲線</Button>
-                <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{setOrigin()}} variant="contained">設置原點</Button>
+                <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickSetScale} variant="contained">設置比例</Button>
+                <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{onClickSetOrigin()}} variant="contained">設置原點</Button>
+                <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{onClickDeletePoint()}} variant="contained">刪除所選取之節點</Button>
                 {/* <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={testFunctionButton} variant="contained">測試功能按鈕</Button> */}
                 <Button
                     variant="contained"
