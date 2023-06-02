@@ -33,7 +33,7 @@ export class BezierCurve implements GUIElement {
     orientationAngle: number; // this is in radians
     
 
-    constructor(anchorPoint?: Point, controlPoints?: ControlPoint[], orientationAngle?: number) {
+    constructor(anchorPoint = {x: 0, y: 0}, controlPoints?: ControlPoint[], orientationAngle=0) {
         if (controlPoints){
             this.controlPoints = controlPoints;
         } else {
@@ -67,16 +67,8 @@ export class BezierCurve implements GUIElement {
                     }
                 }];
         }
-        if (anchorPoint) {
-            this.anchorPoint = anchorPoint;
-        } else {
-            this.anchorPoint = {x: 0, y: 0};
-        }
-        if (orientationAngle) {
-            this.orientationAngle = orientationAngle;
-        } else {
-            this.orientationAngle = 0;
-        }
+        this.anchorPoint = anchorPoint;
+        this.orientationAngle = orientationAngle;
 
     }
 
