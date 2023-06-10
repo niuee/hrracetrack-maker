@@ -417,6 +417,7 @@ export default function RaceTrackBuilder():JSX.Element {
     } 
 
     function switchMode() {
+        trackCurveMediator.current.releaseGrabbedPoint();
         disengageGrab();
         setviewMode((curMode)=>{
             if (curMode == ViewMode.OBJECT) {
@@ -442,7 +443,7 @@ export default function RaceTrackBuilder():JSX.Element {
     }
 
     function disengageGrab() {
-        trackCurveMediator.current.releaseGrabbedPoint();
+        // trackCurveMediator.current.releaseGrabbedPoint();
         grabEngagedRef.current = false;
         grabEngagedCursorPosRef.current = null;
     }
