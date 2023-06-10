@@ -238,15 +238,15 @@ export class TrackCurveMediator {
     handleClick(cursorPosition: {x: number, y: number}): void {
         let clickedOnPoint = false;
         this.getSelectedCurveList().forEach((ident)=>{
-            console.log("in foreach");
+            // console.log("in foreach");
             let curveItem = this.curveMap.get(ident);
             let onPoint = curveItem.curve.clickedOnPoint(cursorPosition);
             if (onPoint.hit) {
-                console.log("Clicked on Point");
-                console.log("Curve Ident:", ident);
-                console.log("Curve Name:", curveItem.name);
-                console.log("Point Index:", onPoint.pointIndex);
-                console.log("Point Type:", onPoint.pointType);
+                // console.log("Clicked on Point");
+                // console.log("Curve Ident:", ident);
+                // console.log("Curve Name:", curveItem.name);
+                // console.log("Point Index:", onPoint.pointIndex);
+                // console.log("Point Type:", onPoint.pointType);
                 let thePoint = curveItem.curve.controlPoints[onPoint.pointIndex];
                 let lastPos: Point;
                 if (onPoint.pointType == "cp") {

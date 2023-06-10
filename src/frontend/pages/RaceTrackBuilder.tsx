@@ -231,13 +231,13 @@ export default function RaceTrackBuilder():JSX.Element {
             let leftClickY = getEventLocation(e).y/cameraZoom - cameraOffset.y - (window.innerHeight / 2 / cameraZoom);
             if (grabEngagedRef.current == false) {
                 if (modeRef.current == ViewMode.EDIT){
-                    console.log("Checking if clicked on something");
+                    // console.log("Checking if clicked on something");
                     trackCurveMediator.current.handleClick({x: leftClickX, y: leftClickY});
                 } 
             } else {
                 // finalize the move
-                console.log("Finalizing grabbed point movement");
-                console.log("Disengaging grab mode");
+                // console.log("Finalizing grabbed point movement");
+                // console.log("Disengaging grab mode");
                 disengageGrab();
                 grabEngagedRef.current = false;
                 grabEngagedCursorPosRef.current = null;
@@ -253,7 +253,7 @@ export default function RaceTrackBuilder():JSX.Element {
         }
         cursorPosRef.current = {x: getEventLocation(e).x/cameraZoom - cameraOffset.x - (window.innerWidth / 2 / cameraZoom), y: getEventLocation(e).y/cameraZoom - cameraOffset.y - (window.innerHeight / 2 / cameraZoom)};
         if (isDragging.current) {
-            console.log("Dragging camera");
+            // console.log("Dragging camera");
             // dragging cmaera
             cameraOffset.x = getEventLocation(e).x/cameraZoom - dragStart.x
             cameraOffset.y = getEventLocation(e).y/cameraZoom - dragStart.y
@@ -264,23 +264,23 @@ export default function RaceTrackBuilder():JSX.Element {
 
                     if (trackCurveMediator.current.hasGrabbedPoint()) {
                         if (grabEngagedCursorPosRef.current != null) {
-                            console.log("Grabbing in session for grabbed point(s)");
+                            // console.log("Grabbing in session for grabbed point(s)");
                             let cursorPosDiff = PointCal.subVector(cursorPosRef.current, grabEngagedCursorPosRef.current);
-                            console.log("cursorDiff:", cursorPosDiff);
+                            // console.log("cursorDiff:", cursorPosDiff);
                             trackCurveMediator.current.handleGrab(modeRef.current,e.shiftKey, cursorPosDiff, snapEnabled);
                         } else {
-                            console.log("No known position of the cursor when grab mode is engaged");
+                            // console.log("No known position of the cursor when grab mode is engaged");
                             grabEngagedCursorPosRef.current = cursorPosRef.current;
                         }
                     } else {
-                        console.log("There is no grabbed point")
+                        // console.log("There is no grabbed point")
                     }
                 }
             } else if (modeRef.current == ViewMode.OBJECT) {
                 if (grabEngagedRef.current && grabEngagedCursorPosRef.current != null) {
-                    console.log("Grabbing in session for entire curve(s)");
+                    // console.log("Grabbing in session for entire curve(s)");
                     let cursorPosDiff = PointCal.subVector(cursorPosRef.current, grabEngagedCursorPosRef.current);
-                    console.log("cursorDiff:", cursorPosDiff);
+                    // console.log("cursorDiff:", cursorPosDiff);
                     trackCurveMediator.current.handleGrab(modeRef.current, e.shiftKey, cursorPosDiff, snapEnabled);
                 }
 
