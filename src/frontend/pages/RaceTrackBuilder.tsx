@@ -544,11 +544,6 @@ export default function RaceTrackBuilder():JSX.Element {
                 <div>
                     <Button onClick={()=>{navigate("/")}} variant="contained">回到首頁</Button>
                 </div>
-                <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickdeleteSelectedSegments} variant="contained">刪除選取的線段</Button>
-                <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickAppendCurve} variant="contained">新增曲線</Button>
-                <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickSetScale} variant="contained">設置比例</Button>
-                <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{onClickSetOrigin()}} variant="contained">設置原點</Button>
-                <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{onClickDeletePoint()}} variant="contained">刪除所選取之節點</Button>
                 {/* <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={testFunctionButton} variant="contained">測試功能按鈕</Button> */}
                 <Button
                     variant="contained"
@@ -561,6 +556,11 @@ export default function RaceTrackBuilder():JSX.Element {
                     />
                 </Button>
                 <Button  onClick={() => {setImgString(defaultImage)}} variant="contained" >重設成預設賽道底圖</Button>
+                <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickdeleteSelectedSegments} variant="contained">刪除選取的線段</Button>
+                <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickAppendCurve} variant="contained">新增曲線</Button>
+                <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickSetScale} variant="contained">設置比例</Button>
+                <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{onClickDeletePoint()}} variant="contained">刪除所選取之節點</Button>
+                <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{onClickSetOrigin()}} variant="contained">設置原點</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT ? "block": "none"}} onClick={()=>{onClickOpenSlopeInputModal()}} variant="contained">針對選取點設置斜率</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT ? "block": "none"}} onClick={()=>{onClickExtendCurve()}} variant="contained">往後延長曲線</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT ? "block": "none"}} onClick={()=>{onClickExtendCurve(true)}} variant="contained">往前延長曲線</Button>
