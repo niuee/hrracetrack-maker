@@ -294,6 +294,7 @@ export class TrackCurveMediator {
         });
     }
 
+
     holdGrabbedPointCurPos(): void {
         if (this.hasGrabbedPoint() && this.curveMap.has(this.grabbedPoint.ident)) {
             let controlPointOfInterest = this.curveMap.get(this.grabbedPoint.ident).curve.controlPoints[this.grabbedPoint.pointIndex];
@@ -389,6 +390,16 @@ export class TrackCurveMediator {
 
     getScale(){
         return this.scale;
+    }
+
+    setGrabbedPointSlope(slope: number){
+        if (this.hasGrabbedPoint() && this.grabbedPoint.pointType === "cp") {
+            console.log("setting slope: ", slope);
+            let curveItem = this.curveMap.get(this.grabbedPoint.ident);
+            let controlPoint = curveItem.curve.controlPoints[this.grabbedPoint.pointIndex];
+            controlPoint.slope = slope;
+            this.curveMap.set(this.grabbedPoint.ident, curveItem);
+        }
     }
 
     

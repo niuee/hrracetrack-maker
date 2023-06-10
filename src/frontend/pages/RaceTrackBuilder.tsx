@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
-import {Grid, Typography, Tooltip, TextField, Stack, Card, CardActionArea, CardMedia, CardContent} from '@mui/material';
-import { Button } from '@mui/material';
+import {Grid, Typography, Tooltip, TextField, Stack, Card, CardActionArea, CardMedia, CardContent, InputAdornment} from '@mui/material';
+import { Button, Modal, Box } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BezierCurve, HandleType, Point } from '../modules/BezierCurve';
 import { PointCal } from 'point2point';
@@ -58,6 +58,17 @@ type SegmentData = {
         }[];
     }[]
 }
+const style = {
+    position: 'absolute' as 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    width: 400,
+    bgcolor: 'background.paper',
+    border: '2px solid #000',
+    boxShadow: 24,
+    p: 4,
+};
 
 export enum ViewMode {
     OBJECT = "OBJECT",
@@ -76,10 +87,15 @@ export default function RaceTrackBuilder():JSX.Element {
     const [curvesList, setCurveList] = React.useState<CurveListDisplay[]>([]);
     const [viewMode, setviewMode] = React.useState<ViewMode>(ViewMode.OBJECT);
     const [snapEnabled, setSnapStatus] = React.useState<boolean>(true);
+    const [openSlopeModal, setSlopeModalDisplay] = React.useState<boolean>(false);
+    const [slopeInputError, setSlopeInputError] = React.useState<boolean>(false);
+    const [slopeInput, setSlopeInput] = React.useState<string>("");
+    const [slopeInputHelperText, setSlopeInputHelperText] = React.useState<string>("");
     const modeRef = React.useRef<ViewMode>(ViewMode.OBJECT);
     const grabEngagedRef = React.useRef<boolean>(false);
     const grabEngagedCursorPosRef = React.useRef<{x: number, y: number}>(null);
     const cursorPosRef = React.useRef<{x:number, y: number}>(null)
+
 
     // Create Staright line Button Attributes
     const [imgString, setImgString] = React.useState(defaultImage);
@@ -129,9 +145,9 @@ export default function RaceTrackBuilder():JSX.Element {
                 }
             } else if (e.code == "Escape"){
                 console.log("Disengaging grab mode");
-                if (modeRef.current == ViewMode.OBJECT) {
+                if (modeRef.current == ViewMode.OBJECT && grabEngagedRef.current) {
                     trackCurveMediator.current.revertCurveToPrevPos();
-                } else if (modeRef.current == ViewMode.EDIT) {
+                } else if (modeRef.current == ViewMode.EDIT && grabEngagedRef.current) {
                     trackCurveMediator.current.revertPointToPrevPos();
                 }
                 disengageGrab();
@@ -222,6 +238,7 @@ export default function RaceTrackBuilder():JSX.Element {
                 // finalize the move
                 console.log("Finalizing grabbed point movement");
                 console.log("Disengaging grab mode");
+                disengageGrab();
                 grabEngagedRef.current = false;
                 grabEngagedCursorPosRef.current = null;
                 // trackCurveMediator.current.holdSelectedCurveCusPos();
@@ -476,6 +493,46 @@ export default function RaceTrackBuilder():JSX.Element {
         }
     }
 
+    function handleCloseSlopeModal(){
+        setSlopeModalDisplay(false);
+    }
+
+    function handleSlopeInputChange(e: React.ChangeEvent<HTMLInputElement>){
+        if (e.target){
+            setSlopeInput(e.target.value);
+        }
+    }
+
+    function filterDecimalOnKeyPress(event:React.KeyboardEvent){
+        let singleDecimal = /^[\.0-9]$/;
+        // console.log("key:",event.key, "singleDecimal:", singleDecimal.test(event.key));
+        if (!singleDecimal.test(event.key) && event.key != "Backspace" && event.key != "Tab"){
+            event.preventDefault();
+        }
+    }
+
+    function validateSlopeInput(){
+        let decimalReg = /^[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)$/;
+        if (!decimalReg.test(slopeInput)){
+            // contain stuff that isn't decimal or integer number
+            setSlopeInputError(true);
+            setSlopeInputHelperText("桶槽高度應為整數或小數數字");
+        } else{
+            setSlopeInputError(false);
+            setSlopeInputHelperText(" ");
+            trackCurveMediator.current.setGrabbedPointSlope(parseFloat(slopeInput));
+            setSlopeModalDisplay(false);
+        }
+    }
+
+    function onClickOpenSlopeInputModal(){
+        if (trackCurveMediator.current.hasGrabbedPoint()){
+            setSlopeModalDisplay(true);
+        } else {
+            console.log("not engaging modal");
+        }
+    }
+
 
     return (
         <div style={{position: 'relative'}}>
@@ -503,6 +560,7 @@ export default function RaceTrackBuilder():JSX.Element {
                     />
                 </Button>
                 <Button  onClick={() => {setImgString(defaultImage)}} variant="contained" >重設成預設賽道底圖</Button>
+                <Button  style={{display: viewMode == ViewMode.EDIT ? "block": "none"}} onClick={()=>{onClickOpenSlopeInputModal()}} variant="contained">針對選取點設置斜率</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT ? "block": "none"}} onClick={()=>{onClickExtendCurve()}} variant="contained">往後延長曲線</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT ? "block": "none"}} onClick={()=>{onClickExtendCurve(true)}} variant="contained">往前延長曲線</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT ? "block": "none"}} onClick={()=>{changeGrabbedHandle2Type(HandleType.ALIGNED)}} variant="contained" >變換選取的把手為 ALIGNED 模式 </Button>
@@ -554,6 +612,41 @@ export default function RaceTrackBuilder():JSX.Element {
                     </Stack>
                 </Card>
             </Stack>
+            <Modal
+                id="slope-modal"
+                open={openSlopeModal}
+                onClose={handleCloseSlopeModal}
+                aria-labelledby="modal-modal-title"
+                aria-describedby="modal-modal-description"
+            >
+                <Box sx={style}>
+                <Typography id="modal-modal-title" variant="h6" component="h2" >
+                    設置區段斜率
+                </Typography>
+                <Typography id="modal-modal-description" sx={{ mt: 2 }}>
+                    設置從本控制點開始至下個控制點之間之區段的斜率
+                </Typography>
+                <TextField
+                        fullWidth
+                        label="區段斜率"
+                        id="curve-slope"
+                        // sx={{ m: 1, /*width: '25ch'*/ }}
+                        type='number'
+                        InputProps={{
+                            // inputProps: {min: 0, inputMode: 'numeric', pattern: '[0-9]*'},
+                            endAdornment: <InputAdornment position="start">斜率</InputAdornment>,
+                        }}
+                        variant="filled"
+                        value={slopeInput}
+                        onChange={handleSlopeInputChange}
+                        error={slopeInputError}
+                        helperText={slopeInputHelperText}
+                        onKeyDown={filterDecimalOnKeyPress}
+                    />
+                <Button variant="outlined" onClick={()=>{validateSlopeInput();}}>確定</Button>
+                <Button variant="outlined" onClick={()=>{setSlopeModalDisplay(false);}}>取消</Button>
+                </Box>
+            </Modal>
         </div>
     )
 }

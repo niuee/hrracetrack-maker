@@ -23,7 +23,8 @@ type ControlPoint = {
     coord: Point, // this is the local coordinate relative to an anchor point
     transformedCoord: Point, // this is the absolute coordinate that is going to be plotted on the canvas
     left_handle:  HandlePoint,
-    right_handle: HandlePoint
+    right_handle: HandlePoint,
+    slope?: number,
 }
 
 type BezierCurveArg = {
@@ -384,15 +385,20 @@ export class BezierCurve implements GUIElement {
             // NOTE Above is the direction section
 
             // NOTE Below is the length text section
-            let tVal = this.mapPercentage2TVal(25, arcLengths, fullArcLength, this.mapIndex2TVal);
+            let tVal = this.mapPercentage2TVal(12, arcLengths, fullArcLength, this.mapIndex2TVal);
             let lengthTextPos = bCurve.get(tVal);
             let offsetDirection = PointCal.rotatePoint(PointCal.unitVector(bCurve.derivative(tVal)), Math.PI / 2);
             let arcLengthPos = PointCal.addVector(lengthTextPos, PointCal.multiplyVectorByScalar(offsetDirection, 50));
             context.beginPath();
-            context.font = "30px Noto Sans";
-            context.fillText(`Arc Length ${(fullArcLength * this.scale).toFixed(3)}`, arcLengthPos.x, arcLengthPos.y);
+            context.font = "30px Noto Sans TC";
+            if (startPoint.slope != null) {
+                context.fillText(`區段長度: ${(fullArcLength * this.scale).toFixed(3)}公尺, 斜率: ${startPoint.slope.toFixed(3)}`, arcLengthPos.x, arcLengthPos.y);
+            } else {
+                context.fillText(`區段長度: ${(fullArcLength * this.scale).toFixed(3)}公尺`, arcLengthPos.x, arcLengthPos.y);
+            }
             context.strokeStyle = "rgb(0, 0, 0)";
             // NOTE Above is the length text section
+
 
             context.beginPath();
             let firstHandle = startPoint.right_handle.transformedCoord;
