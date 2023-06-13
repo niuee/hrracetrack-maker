@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import {Grid, Typography, Tooltip, TextField, Stack, Card, CardActionArea, CardMedia, CardContent, InputAdornment} from '@mui/material';
+import {Grid, Typography, Tooltip, TextField, Stack, Card, CardActionArea, CardMedia, CardContent, InputAdornment, FormGroup, Switch, FormControlLabel} from '@mui/material';
 import { Button, Modal, Box } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { BezierCurve, HandleType, Point } from '../modules/BezierCurve';
@@ -87,6 +87,8 @@ export default function RaceTrackBuilder():JSX.Element {
     const [curvesList, setCurveList] = React.useState<CurveListDisplay[]>([]);
     const [viewMode, setviewMode] = React.useState<ViewMode>(ViewMode.OBJECT);
     const [snapEnabled, setSnapStatus] = React.useState<boolean>(true);
+    const snapRef = React.useRef<boolean>(true);
+    const [arcFit, setArcFit] = React.useState<boolean>(false);
     const [openSlopeModal, setSlopeModalDisplay] = React.useState<boolean>(false);
     const [slopeInputError, setSlopeInputError] = React.useState<boolean>(false);
     const [slopeInput, setSlopeInput] = React.useState<string>("");
@@ -134,17 +136,17 @@ export default function RaceTrackBuilder():JSX.Element {
             } 
             if (e.code == "KeyG") {
                 if (!grabEngagedRef.current && ((modeRef.current == ViewMode.EDIT && trackCurveMediator.current.hasGrabbedPoint()) || modeRef.current == ViewMode.OBJECT)) {
-                    console.log("Engaging Grab Mode");
+                    // console.log("Engaging Grab Mode");
                     engageGrab();
                 } else {
                     if (grabEngagedRef.current) {
-                        console.log("Grab mode already engaged");
+                        // console.log("Grab mode already engaged");
                     } else {
-                        console.log("Unable to engage grab mode due to no grabbed point");
+                        // console.log("Unable to engage grab mode due to no grabbed point");
                     }
                 }
             } else if (e.code == "Escape"){
-                console.log("Disengaging grab mode");
+                // console.log("Disengaging grab mode");
                 if (modeRef.current == ViewMode.OBJECT && grabEngagedRef.current) {
                     trackCurveMediator.current.revertCurveToPrevPos();
                 } else if (modeRef.current == ViewMode.EDIT && grabEngagedRef.current) {
@@ -267,7 +269,7 @@ export default function RaceTrackBuilder():JSX.Element {
                             // console.log("Grabbing in session for grabbed point(s)");
                             let cursorPosDiff = PointCal.subVector(cursorPosRef.current, grabEngagedCursorPosRef.current);
                             // console.log("cursorDiff:", cursorPosDiff);
-                            trackCurveMediator.current.handleGrab(modeRef.current,e.shiftKey, cursorPosDiff, snapEnabled);
+                            trackCurveMediator.current.handleGrab(modeRef.current,e.shiftKey, e.ctrlKey, cursorPosDiff);
                         } else {
                             // console.log("No known position of the cursor when grab mode is engaged");
                             grabEngagedCursorPosRef.current = cursorPosRef.current;
@@ -281,7 +283,7 @@ export default function RaceTrackBuilder():JSX.Element {
                     // console.log("Grabbing in session for entire curve(s)");
                     let cursorPosDiff = PointCal.subVector(cursorPosRef.current, grabEngagedCursorPosRef.current);
                     // console.log("cursorDiff:", cursorPosDiff);
-                    trackCurveMediator.current.handleGrab(modeRef.current, e.shiftKey, cursorPosDiff, snapEnabled);
+                    trackCurveMediator.current.handleGrab(modeRef.current, e.shiftKey, e.ctrlKey, cursorPosDiff);
                 }
 
                 // NOTE
@@ -313,7 +315,7 @@ export default function RaceTrackBuilder():JSX.Element {
 
     function adjustZoom(e, zoomAmount, zoomFactor) {
         if (e.ctrlKey){
-            console.log("Wheel with control key");
+            // console.log("Wheel with control key");
             e.preventDefault();
             if (!isDragging.current) {
                 if (zoomAmount) {
@@ -332,7 +334,7 @@ export default function RaceTrackBuilder():JSX.Element {
         
         var isTouchPad = e.wheelDeltaY ? e.wheelDeltaY === -3 * e.deltaY : e.deltaMode === 0
         // your code
-        console.log("From" + isTouchPad? "touchpad" : "mouse");
+        // console.log("From" + isTouchPad? "touchpad" : "mouse");
 
         if (isTouchPad) {
             e.preventDefault();
@@ -433,7 +435,7 @@ export default function RaceTrackBuilder():JSX.Element {
     function engageGrab(){
         grabEngagedRef.current = true;
         grabEngagedCursorPosRef.current = cursorPosRef.current;
-        console.log("Cursor Position when grab mode engaged:", cursorPosRef.current);
+        // console.log("Cursor Position when grab mode engaged:", cursorPosRef.current);
         if (modeRef.current == ViewMode.OBJECT) {
             trackCurveMediator.current.holdSelectedCurveCusPos();
         } else if (modeRef.current == ViewMode.EDIT) {
@@ -505,7 +507,9 @@ export default function RaceTrackBuilder():JSX.Element {
     }
 
     function filterDecimalOnKeyPress(event:React.KeyboardEvent){
-        let singleDecimal = /^[\.0-9]$/;
+        let singleDecimal = /^[\-\.0-9]$/;
+        // let singleDecimal = /^[+-]?[0-9]{7}\.[0-9]{2}$/;
+        // let singleDecimal = /^[+-]?([0-9]+\.?[0-9]*|\.[0-9]+)$/;
         // console.log("key:",event.key, "singleDecimal:", singleDecimal.test(event.key));
         if (!singleDecimal.test(event.key) && event.key != "Backspace" && event.key != "Tab"){
             event.preventDefault();
@@ -530,9 +534,34 @@ export default function RaceTrackBuilder():JSX.Element {
         if (trackCurveMediator.current.hasGrabbedPoint()){
             setSlopeModalDisplay(true);
         } else {
-            console.log("not engaging modal");
+            // console.log("not engaging modal");
         }
     }
+
+    function onClickExportTrack(){
+        let res = trackCurveMediator.current.exportTrack({x: origin.current.centerx, y: origin.current.centery});
+        if (res){
+            var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(res));
+            var downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href",     dataStr);
+            downloadAnchorNode.setAttribute("download", "track" + ".json");
+            document.body.appendChild(downloadAnchorNode); // required for firefox
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+    }
+
+    function toggleSnap(){
+        snapRef.current = !snapRef.current;
+        setSnapStatus((curSnap)=>!curSnap);
+        trackCurveMediator.current.toggleSnap();
+    }
+
+    function toggleArcFit(){
+        setArcFit((curArcFit)=>!curArcFit);
+        trackCurveMediator.current.toggleArcFit();
+    }
+
 
 
     return (
@@ -559,6 +588,7 @@ export default function RaceTrackBuilder():JSX.Element {
                 <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickdeleteSelectedSegments} variant="contained">刪除選取的線段</Button>
                 <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickAppendCurve} variant="contained">新增曲線</Button>
                 <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickSetScale} variant="contained">設置比例</Button>
+                <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickExportTrack} variant="contained">輸出賽道</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{onClickDeletePoint()}} variant="contained">刪除所選取之節點</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{onClickSetOrigin()}} variant="contained">設置原點</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT ? "block": "none"}} onClick={()=>{onClickOpenSlopeInputModal()}} variant="contained">針對選取點設置斜率</Button>
@@ -578,7 +608,11 @@ export default function RaceTrackBuilder():JSX.Element {
                     {viewMode == ViewMode.OBJECT? <ViewInArIcon />: <WidgetsOutlinedIcon/>}   
                     <span>  {viewMode} 模式</span>
                 </div>  
-                <div>原點位置: x:{originCoord.x} y: {originCoord.y}</div>
+                <div>原點位置: x:{originCoord.x.toFixed(3)} y: {originCoord.y.toFixed(3)}</div>
+                <FormGroup>
+                    <FormControlLabel control={<Switch checked={snapEnabled} onChange={toggleSnap}/>} label="Snap Point?" />
+                    <FormControlLabel control={<Switch checked={arcFit} onChange={toggleArcFit} />} label="Show Arc Fit?" />
+                </FormGroup>
                 <Card sx={{ maxWidth: 345 }} style={{width: "10vw", maxHeight:"40vh", overflowY:"scroll", opacity: 0.5}}>
                     <Stack spacing={1} style={{width: "100%"}}>
 

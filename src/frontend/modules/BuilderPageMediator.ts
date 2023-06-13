@@ -1,9 +1,7 @@
 import { Bezier } from "bezier-js";
 import { TrackSegment } from "./SegmentFactory";
-import { BezierCurve, HandleType } from "./BezierCurve";
+import { BezierCurve, HandleType, Track } from "./BezierCurve";
 import { PointCal } from "point2point";
-
-
 
 type SegmentItem = {
     segment: TrackSegment;
@@ -40,6 +38,9 @@ export class TrackCurveMediator {
     private curveBeingEdited: {editing: boolean, ident: string} = {editing: false, ident: null};
     private selectedCurveLastPos: Map<string, Point> = new Map<string, Point>();
     private grabbedPoint: {ident: string, pointIndex: number, pointType: string, lastPos: Point} = {ident: null, pointIndex: null, pointType: null, lastPos: null};
+    
+    private withArcFit: boolean = false;
+    private snapEnabled: boolean = true;
     private scale: number = 1;
     private operationStack: {operationType: OperationType, targetIdent: string };
 
@@ -117,7 +118,7 @@ export class TrackCurveMediator {
             if (this.hasGrabbedPoint() && this.grabbedPoint.ident === ident){
                 item.curve.drawGrabbedPoint(context, this.grabbedPoint.pointIndex, this.grabbedPoint.pointType);
             }
-            item.curve.draw(context, item.selected);
+            item.curve.draw(context, item.selected, true, this.withArcFit);
             if (item.selected && viewMode == ViewMode.EDIT) {
                 item.curve.drawControlPoints(context);
             }
@@ -198,30 +199,37 @@ export class TrackCurveMediator {
         this.grabbedPoint.pointType = null;
     }
 
-    handleGrab(viewMode: ViewMode, shiftPressed: boolean, cursorPositionDiff: {x: number, y: number}, snapEnabled=false): void {
+    handleGrab(viewMode: ViewMode, shiftPressed: boolean, commandPressed: boolean, cursorPositionDiff: {x: number, y: number}): void {
         if (viewMode == ViewMode.EDIT) {
             if (this.grabbedPoint.ident != null) {
                 let curveOfInterest = this.curveMap.get(this.grabbedPoint.ident);
                 cursorPositionDiff = PointCal.transform2NewAxis(cursorPositionDiff, curveOfInterest.curve.orientationAngle);
                 let destPos = PointCal.addVector(this.grabbedPoint.lastPos, cursorPositionDiff);
-                let snapCandidate =  {hit: false, coord: null};
-                this.curveMap.forEach((curveItem, ident)=>{
-                    if (curveItem.selected) {
-                        let res = curveItem.curve.clickedOnPoint(this.curveMap.get(this.grabbedPoint.ident).curve.transformPoint(destPos));
-                        if (res.hit && !snapCandidate.hit) {
-                            if (this.grabbedPoint.ident == ident && this.grabbedPoint.pointIndex == res.pointIndex && this.grabbedPoint.pointType == res.pointType){
-                                return;
+                if (shiftPressed && this.grabbedPoint.pointIndex > 1 && this.grabbedPoint.pointType == "cp") {
+                    let prevPoint = curveOfInterest.curve.controlPoints[this.grabbedPoint.pointIndex - 1];
+                    let prevPrevPoint = curveOfInterest.curve.controlPoints[this.grabbedPoint.pointIndex - 2];
+                    let moveAxis = PointCal.unitVectorFromA2B(prevPoint.coord, prevPrevPoint.coord);
+                    destPos = PointCal.addVector(prevPoint.coord, PointCal.multiplyVectorByScalar(moveAxis, PointCal.dotProduct(cursorPositionDiff, moveAxis)));
+                }
+                curveOfInterest.curve.moveControlPoint(destPos, this.grabbedPoint.pointIndex, this.grabbedPoint.pointType)
+                if (this.snapEnabled) {
+                    let snapCandidate =  {hit: false, coord: null};
+                    this.curveMap.forEach((curveItem, ident)=>{
+                        if (curveItem.selected) {
+                            let res = curveItem.curve.clickedOnPoint(this.curveMap.get(this.grabbedPoint.ident).curve.transformPoint(destPos));
+                            if (res.hit && !snapCandidate.hit) {
+                                if (this.grabbedPoint.ident == ident && this.grabbedPoint.pointIndex == res.pointIndex && this.grabbedPoint.pointType == res.pointType){
+                                    return;
+                                }
+                                snapCandidate.hit = true;
+                                snapCandidate.coord = PointCal.subVector(res.pointPos, this.curveMap.get(this.grabbedPoint.ident).curve.anchorPoint);
+                                // console.log("Snapping hit something");
                             }
-                            snapCandidate.hit = true;
-                            snapCandidate.coord = PointCal.subVector(res.pointPos, this.curveMap.get(this.grabbedPoint.ident).curve.anchorPoint);
-                            console.log("Snapping hit something");
                         }
+                    });
+                    if (snapCandidate.hit) {
+                        curveOfInterest.curve.moveControlPoint(snapCandidate.coord, this.grabbedPoint.pointIndex, this.grabbedPoint.pointType)
                     }
-                });
-                if (snapCandidate.hit && snapEnabled) {
-                    curveOfInterest.curve.moveControlPoint(snapCandidate.coord, this.grabbedPoint.pointIndex, this.grabbedPoint.pointType)
-                } else {
-                    curveOfInterest.curve.moveControlPoint(destPos, this.grabbedPoint.pointIndex, this.grabbedPoint.pointType)
                 }
             }
         } else if (viewMode == ViewMode.OBJECT) {
@@ -394,7 +402,7 @@ export class TrackCurveMediator {
 
     setGrabbedPointSlope(slope: number){
         if (this.hasGrabbedPoint() && this.grabbedPoint.pointType === "cp") {
-            console.log("setting slope: ", slope);
+            // console.log("setting slope: ", slope);
             let curveItem = this.curveMap.get(this.grabbedPoint.ident);
             let controlPoint = curveItem.curve.controlPoints[this.grabbedPoint.pointIndex];
             controlPoint.slope = slope;
@@ -402,6 +410,36 @@ export class TrackCurveMediator {
         }
     }
 
+    exportTrack(origin: Point){
+        let output:Track[] = [];
+        let nullFlag = false;
+        this.curveMap.forEach((curveItem, ident)=>{
+            if (curveItem.name !== "SCALE") {
+                let outputFromCurve = curveItem.curve.exportCurve(origin);
+                if (outputFromCurve == null){
+                    console.log("something went wrong in curve fitting")
+                    nullFlag = true;
+                } else {
+                    output.push(...curveItem.curve.exportCurve(origin));
+                }
+            }
+        });
+        if (nullFlag){
+            output = [];
+            console.log("No output something went wrong in curve fitting");
+            return null;
+        } else {
+            console.log(output);
+            return output;
+        }
+    }
     
+    toggleArcFit(){
+        this.withArcFit = !this.withArcFit;
+    }
+
+    toggleSnap(){
+        this.snapEnabled = !this.snapEnabled;
+    }
 }
 

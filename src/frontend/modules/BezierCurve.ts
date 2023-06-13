@@ -13,6 +13,22 @@ export enum HandleType {
     ALIGNED,
     FREE
 }
+
+export enum TrackType {
+    STRAIGHT = "STRAIGHT",
+    CURVE = "CURVE",
+}
+
+export type Track = {
+    tracktype: TrackType,
+    startPoint: Point,
+    endPoint: Point,
+    angleSpan?: number,
+    radius?: number,
+    slope?: number,
+    center?: Point,
+}
+
 type HandlePoint = {
     coord: Point,
     transformedCoord: Point,
@@ -146,7 +162,9 @@ export class BezierCurve implements GUIElement {
                     controlPointOfInterest.left_handle.coord = PointCal.addVector(controlPointOfInterest.coord, PointCal.multiplyVectorByScalar(posDiffDirection, posDiff * 0.3));
                 }
                 controlPointOfInterest.left_handle.handleType = HandleType.VECTOR;
-                controlPointOfInterest.right_handle.handleType = HandleType.FREE;
+                if (controlPointOfInterest.right_handle.handleType !== HandleType.VECTOR){
+                    controlPointOfInterest.right_handle.handleType = HandleType.FREE;
+                }
                 break;
             case HandleType.ALIGNED:
                 controlPointOfInterest.left_handle.handleType = HandleType.ALIGNED;
@@ -176,7 +194,9 @@ export class BezierCurve implements GUIElement {
                     controlPointOfInterest.right_handle.coord = PointCal.addVector(controlPointOfInterest.coord, PointCal.multiplyVectorByScalar(posDiffDirection, posDiff * 0.3));
                 }
                 controlPointOfInterest.right_handle.handleType = HandleType.VECTOR;
-                controlPointOfInterest.left_handle.handleType = HandleType.FREE;
+                if (controlPointOfInterest.left_handle.handleType !== HandleType.VECTOR){
+                    controlPointOfInterest.left_handle.handleType = HandleType.FREE;
+                }
                 break;
             case HandleType.ALIGNED:
                 controlPointOfInterest.right_handle.handleType = HandleType.ALIGNED;
@@ -341,7 +361,7 @@ export class BezierCurve implements GUIElement {
         }
     }
 
-    draw(context: CanvasRenderingContext2D, selected=false, withDirection=true) {
+    draw(context: CanvasRenderingContext2D, selected=false, withDirection=true, withArcFit=false) {
         // this.updatePointsCoordinates();
         this.updatePointsCoordinates();
         let drawPoints = this.controlPoints.filter((point, index) => {
@@ -399,6 +419,34 @@ export class BezierCurve implements GUIElement {
             context.strokeStyle = "rgb(0, 0, 0)";
             // NOTE Above is the length text section
 
+
+            // NOTE Below is the circular arc section
+            if (selected) {
+                context.strokeStyle = "rgb(255, 79, 79)";
+            }
+
+            if (withArcFit){
+                if (startPoint.right_handle.handleType !== HandleType.VECTOR || endPoint.left_handle.handleType !== HandleType.VECTOR) {
+                    try{
+                        let arcs = bCurve.arcs(0.05);
+                        arcs.forEach((arc)=>{
+                            context.beginPath();
+                            context.moveTo(arc.x, arc.y);
+                            let startPoint = bCurve.get(arc.interval.start);
+                            let endPoint = bCurve.get(arc.interval.end);
+                            context.lineTo(startPoint.x, startPoint.y);
+                            context.moveTo(arc.x, arc.y);
+                            context.lineTo(endPoint.x, endPoint.y);
+                            // context.arcTo(startPoint.x, startPoint.y, endPoint.x, endPoint.y, arc.r);
+                            context.stroke();
+                        });
+                    } catch (e){
+                        console.log("Arc Fit has some error");
+                    }
+                }
+            }
+            context.strokeStyle = "rgb(0, 0, 0)";
+            // NOTE Above is the circular arc section
 
             context.beginPath();
             let firstHandle = startPoint.right_handle.transformedCoord;
@@ -581,6 +629,64 @@ export class BezierCurve implements GUIElement {
 
     mapIndex2TVal(index: number): number {
         return index / 100;
+    }
+
+    exportCurve(origin: Point){
+        let exportTracks: Track[] = [];
+        for (let index=1; index < this.controlPoints.length; index++){
+            let startPoint = this.controlPoints[index - 1];
+            let endPoint = this.controlPoints[index];
+            if (startPoint.right_handle.handleType == HandleType.VECTOR && endPoint.left_handle.handleType == HandleType.VECTOR){
+                let track: Track = {
+                    tracktype: TrackType.STRAIGHT,
+                    startPoint: startPoint.transformedCoord,
+                    endPoint: endPoint.transformedCoord,
+                };
+                // NOTE straight track
+                track.startPoint = PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, startPoint.transformedCoord), PointCal.distanceBetweenPoints(origin, startPoint.transformedCoord) * this.scale));
+                track.endPoint = PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, endPoint.transformedCoord), PointCal.distanceBetweenPoints(origin, endPoint.transformedCoord) * this.scale));
+                if (startPoint.slope){
+                    track.slope = startPoint.slope;
+                }
+                exportTracks.push(track);
+            } else {
+                // NOTE curve track
+                let bCurve = new Bezier([startPoint.transformedCoord, startPoint.right_handle.transformedCoord, endPoint.left_handle.transformedCoord, endPoint.transformedCoord]);
+
+                try{
+                    let arcs = bCurve.arcs(0.05);
+                    arcs.forEach((arc)=>{
+                        let track: Track= {
+                            tracktype: TrackType.CURVE,
+                            startPoint: PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, bCurve.get(arc.interval.start)), this.scale * PointCal.distanceBetweenPoints(origin, bCurve.get(arc.interval.end)))),
+                            endPoint: PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, bCurve.get(arc.interval.end)), this.scale * PointCal.distanceBetweenPoints(origin, bCurve.get(arc.interval.end)))),
+                            radius: this.scale * arc.r,
+                        }
+                        let center = PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, {x: arc.x, y: arc.y}), this.scale * PointCal.distanceBetweenPoints(origin, {x: arc.x, y: arc.y})));
+                        track.center = center;
+                        track.angleSpan = PointCal.angleFromA2B(PointCal.subVector(track.startPoint, center), PointCal.subVector(track.endPoint, center));
+                        // context.beginPath();
+                        // context.moveTo(arc.x, arc.y);
+                        // let startPoint = bCurve.get(arc.interval.start);
+                        // let endPoint = bCurve.get(arc.interval.end);
+                        // context.lineTo(startPoint.x, startPoint.y);
+                        // context.moveTo(arc.x, arc.y);
+                        // context.lineTo(endPoint.x, endPoint.y);
+                        // context.arcTo(startPoint.x, startPoint.y, endPoint.x, endPoint.y, arc.r);
+                        // context.stroke();
+                        if (startPoint.slope){
+                            track.slope = startPoint.slope;
+                        }
+                        exportTracks.push(track);
+                    });
+                } catch (e){
+                    console.log("Arc Fit has some error");
+                    return null;
+                }
+            }
+
+        } 
+        return exportTracks;
     }
 
 }
