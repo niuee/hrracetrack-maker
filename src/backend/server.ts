@@ -14,11 +14,6 @@ const app = express();
 
 // Serve the static files from the React app
 
-
-app.use('/racetrack-maker/', express.static(path.join(__dirname, "../")));
-app.use('/racetrack-maker/', express.static(path.join(__dirname, "../public")));
-
-
 app.get('/racetrack-maker/', (req,res) =>{
     console.log("Got request");
     res.sendFile(path.join(path.resolve(__dirname, ".."), '/index.html'));
@@ -28,6 +23,11 @@ app.get('/racetrack-maker/builder', (req,res) =>{
     // console.log("Builder request");
     res.sendFile(path.join(path.resolve(__dirname, ".."), '/index.html'));
 });
+
+app.use('/racetrack-maker/', express.static(path.join(__dirname, "../")));
+app.use('/racetrack-maker/', express.static(path.join(__dirname, "../public")));
+
+
 
 app.get("*", (req, res)=>{
     // console.log(req.originalUrl);
