@@ -569,7 +569,7 @@ export default function RaceTrackBuilder():JSX.Element {
             <canvas id="canvas" style={{position:'absolute', top: 0, left: 0, width: "100%", height:"100vh", margin: "none"}}></canvas>
             <img id="racecourse_overlay" style={{display: "none"}} src={`data:image/jpeg;base64,${imgString}`} alt="racecourse" />
             <div style={{position: 'absolute', top:"90vh", left: "90vw"}}>Default Image Source: JRA</div>
-            <Stack alignItems={'center'} spacing={2}style={{position: "absolute", margin:"50px", width: "10vw"}} >
+            <Stack alignItems={'center'} spacing={2}style={{position: "absolute", margin:"50px", width: "10vw", height: "80vh", overflow: "scroll"}} >
                 <div>
                     <Button onClick={()=>{navigate("/racetrack-maker/")}} variant="contained">回到首頁</Button>
                 </div>

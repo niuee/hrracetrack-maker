@@ -49,7 +49,7 @@ module.exports = [
             filename: 'index.html',
             inject: 'body',
             path: path.resolve(__dirname, 'dist'),// Output directory
-            publicPath: "/"
+            publicPath: "/racetrack-maker/"
         })
     ],
   }
