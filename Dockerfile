@@ -4,6 +4,7 @@ WORKDIR /home/node/app
 COPY . /home/node/app/
 RUN npm install
 RUN npx webpack
+RUN ./mv_public.sh
 EXPOSE ${PORT}
 ENV CMD_PORT ${PORT}
 CMD npm start ${CMD_PORT}
