@@ -1,2 +1,2 @@
 mkdir -p ./dist/public/;
-mv ./public/* ./dist/public/
+cp ./public/* ./dist/public/
