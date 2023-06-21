@@ -20,7 +20,7 @@ app.use('/racetrack-maker/', express.static(path.join(__dirname, "../public")));
 
 
 app.get('/racetrack-maker/', (req,res) =>{
-    // console.log("Got request");
+    console.log("Got request");
     res.sendFile(path.join(path.resolve(__dirname, ".."), '/index.html'));
 });
 
