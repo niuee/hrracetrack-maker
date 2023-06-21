@@ -16,7 +16,7 @@ export function Home():JSX.Element{
             >
 
             <Typography variant='h1' >賽道創作者</Typography>
-            <Button sx={{marginTop:1}} onClick={()=>{navigate("/builder")}} variant="contained">開始創作</Button>
+            <Button sx={{marginTop:1}} onClick={()=>{navigate("/racetrack-maker/builder")}} variant="contained">開始創作</Button>
         </Grid> 
     );
 }

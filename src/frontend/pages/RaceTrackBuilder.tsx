@@ -571,7 +571,7 @@ export default function RaceTrackBuilder():JSX.Element {
             <div style={{position: 'absolute', top:"90vh", left: "90vw"}}>Default Image Source: JRA</div>
             <Stack alignItems={'center'} spacing={2}style={{position: "absolute", margin:"50px", width: "10vw"}} >
                 <div>
-                    <Button onClick={()=>{navigate("/")}} variant="contained">回到首頁</Button>
+                    <Button onClick={()=>{navigate("/racetrack-maker/")}} variant="contained">回到首頁</Button>
                 </div>
                 {/* <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={testFunctionButton} variant="contained">測試功能按鈕</Button> */}
                 <Button

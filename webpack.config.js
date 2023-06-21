@@ -48,7 +48,8 @@ module.exports = [
             template: "./src/page/index.html",
             filename: 'index.html',
             inject: 'body',
-            path: path.resolve(__dirname, 'dist') // Output directory
+            path: path.resolve(__dirname, 'dist'),// Output directory
+            publicPath: "/"
         })
     ],
   }

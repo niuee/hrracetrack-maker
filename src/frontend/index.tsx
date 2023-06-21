@@ -8,8 +8,8 @@ const Index = () => {
   return (
       <Router>
          <Routes>
-              <Route path="/" element={<Home/>}/>
-              <Route path="/builder" element={<RaceTrackBuilder/>}/>
+              <Route path="/racetrack-maker/" element={<Home/>}/>
+              <Route path="/racetrack-maker/builder" element={<RaceTrackBuilder/>}/>
           </Routes> 
       </Router>
   ); 
