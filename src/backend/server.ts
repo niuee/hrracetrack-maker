@@ -14,18 +14,18 @@ const app = express();
 
 // Serve the static files from the React app
 
-app.get('/racetrack-maker/', (req,res) =>{
+app.get('/', (req,res) =>{
     console.log("Got request");
     res.sendFile(path.join(path.resolve(__dirname, ".."), '/index.html'));
 });
 
-app.get('/racetrack-maker/builder', (req,res) =>{
+app.get('/builder', (req,res) =>{
     // console.log("Builder request");
     res.sendFile(path.join(path.resolve(__dirname, ".."), '/index.html'));
 });
 
-app.use('/racetrack-maker/', express.static(path.join(__dirname, "../")));
-app.use('/racetrack-maker/', express.static(path.join(__dirname, "../public")));
+app.use('/', express.static(path.join(__dirname, "../")));
+app.use('/', express.static(path.join(__dirname, "../public")));
 
 
 
@@ -33,7 +33,7 @@ app.get("*", (req, res)=>{
     // console.log(req.originalUrl);
     // console.log("404 not found");
     // res.status(404).send();
-    res.redirect("/racetrack-maker/");
+    res.redirect("/racetrack-maker");
 })
 
 const port = serverPort || process.env.PORT || 5000;
