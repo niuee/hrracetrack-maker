@@ -165,7 +165,7 @@ export default function RaceTrackBuilder():JSX.Element {
             }
             
         });
-
+        // document.title = "賽道創作者";
         requestRef.current = requestAnimationFrame(draw);
         return ()=>{cancelAnimationFrame(requestRef.current)}
     };

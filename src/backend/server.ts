@@ -20,19 +20,20 @@ app.use('/racetrack-maker/', express.static(path.join(__dirname, "../public")));
 
 
 app.get('/racetrack-maker/', (req,res) =>{
-    console.log("Got request");
+    // console.log("Got request");
     res.sendFile(path.join(path.resolve(__dirname, ".."), '/index.html'));
 });
 
 app.get('/racetrack-maker/builder', (req,res) =>{
-    console.log("Builder request");
+    // console.log("Builder request");
     res.sendFile(path.join(path.resolve(__dirname, ".."), '/index.html'));
 });
 
 app.get("*", (req, res)=>{
-    console.log(req.originalUrl);
-    console.log("404 not found");
-    res.status(404).send();
+    // console.log(req.originalUrl);
+    // console.log("404 not found");
+    // res.status(404).send();
+    res.redirect("/racektrack-maker/");
 })
 
 const port = serverPort || process.env.PORT || 5000;
