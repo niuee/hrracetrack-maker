@@ -1,6 +1,6 @@
 # hrracetrack-maker
 
-[Live Demo](https://vntchang.dev/racetrackMaker).
+[Live Demo](https://vntchang.dev/racetrack-maker).
 
 This is essentially a customized bezier curve editor that I wrote for my horse racing simulation game. The editing logic follows the one in blender. This is a tool for me to create tracks based on realistic racecourses in the world that I can use in the physics simulation engine. Currently, the menus and buttons are all in Chinese.  
 
