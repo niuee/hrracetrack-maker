@@ -8,7 +8,7 @@ To Pan and Zoom
 - Mouse and Keyboard: Hold MetaKey (command/windows) and drag the mouse to pan. Scroll the wheel to zoom.
 - Trackpad: Pinch to Zoom, two-finger slide to pan
 
-There are two modes in the editor. (Use ⌥ Option (or Alt) to switch between modes)
+There are two modes in the editor. (Use ⌥ Option (or Alt) to switch between modes) (Press G to initiate the grab mode to move stuff you selected; curve selected would be highlight in red; control points selected would be filled)
 - Object Mode: You can select curves using the list on the right side of the screen. Selected curves would be highlighted in green. You can move around the selected curves (the entire curve). You can double-click the card in the curves list to rename the curve to your liking.
 - Edit Mode: You can drag the selected control point. You can either extend or prepend the curve. 
 
