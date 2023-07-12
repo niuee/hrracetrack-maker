@@ -484,6 +484,12 @@ export default function RaceTrackBuilder():JSX.Element {
         }
     }
 
+    function onClickResetOrigin(){
+        origin.current.centerx = 0;
+        origin.current.centery = 0;
+        setOriginCoord({x: origin.current.centerx, y: origin.current.centery});
+    }
+
     function onClickSetScale(){
         if (!trackCurveMediator.current.calculateScale()){
             alert("請設置一個名字為\"SCALE\"的曲線");
@@ -591,6 +597,7 @@ export default function RaceTrackBuilder():JSX.Element {
                 <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={onClickExportTrack} variant="contained">輸出賽道</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{onClickDeletePoint()}} variant="contained">刪除所選取之節點</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{onClickSetOrigin()}} variant="contained">設置原點</Button>
+                <Button  style={{display: viewMode == ViewMode.EDIT? "block": "none"}} onClick={()=>{onClickResetOrigin()}} variant="contained">預設原點</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT ? "block": "none"}} onClick={()=>{onClickOpenSlopeInputModal()}} variant="contained">針對選取點設置斜率</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT ? "block": "none"}} onClick={()=>{onClickExtendCurve()}} variant="contained">往後延長曲線</Button>
                 <Button  style={{display: viewMode == ViewMode.EDIT ? "block": "none"}} onClick={()=>{onClickExtendCurve(true)}} variant="contained">往前延長曲線</Button>

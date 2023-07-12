@@ -582,7 +582,7 @@ export class BezierCurve implements GUIElement {
         let arcLengths = [];
         let arcLength = 0;
         let curPoint = bCurve.get(0);
-        for (let tVal = 0; tVal <= 1; tVal += 0.01) {
+        for (let tVal = 0; tVal <= 1; tVal += 0.001) {
             let adjacentPoint = bCurve.get(tVal);
             let dist = PointCal.distanceBetweenPoints(adjacentPoint, curPoint);
             arcLength += dist;
@@ -628,7 +628,7 @@ export class BezierCurve implements GUIElement {
     }
 
     mapIndex2TVal(index: number): number {
-        return index / 100;
+        return index / 1000;
     }
 
     exportCurve(origin: Point){
@@ -651,29 +651,26 @@ export class BezierCurve implements GUIElement {
                 exportTracks.push(track);
             } else {
                 // NOTE curve track
-                let bCurve = new Bezier([startPoint.transformedCoord, startPoint.right_handle.transformedCoord, endPoint.left_handle.transformedCoord, endPoint.transformedCoord]);
+                let startPointTransformed = PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, startPoint.transformedCoord), PointCal.distanceBetweenPoints(origin, startPoint.transformedCoord) * this.scale));
+                let endPointTransformed = PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, endPoint.transformedCoord), PointCal.distanceBetweenPoints(origin, endPoint.transformedCoord) * this.scale));
+                let rightHandleTransformed = PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, startPoint.right_handle.transformedCoord), PointCal.distanceBetweenPoints(origin, startPoint.right_handle.transformedCoord) * this.scale));
+                let leftHandleTransformed = PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, endPoint.left_handle.transformedCoord), PointCal.distanceBetweenPoints(origin, endPoint.left_handle.transformedCoord) * this.scale));
+
+
+                let bCurve = new Bezier([startPointTransformed, rightHandleTransformed, leftHandleTransformed, endPointTransformed]);
 
                 try{
                     let arcs = bCurve.arcs(0.05);
                     arcs.forEach((arc)=>{
+
                         let track: Track= {
                             tracktype: TrackType.CURVE,
-                            startPoint: PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, bCurve.get(arc.interval.start)), this.scale * PointCal.distanceBetweenPoints(origin, bCurve.get(arc.interval.end)))),
-                            endPoint: PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, bCurve.get(arc.interval.end)), this.scale * PointCal.distanceBetweenPoints(origin, bCurve.get(arc.interval.end)))),
-                            radius: this.scale * arc.r,
-                        }
-                        let center = PointCal.flipYAxis(PointCal.multiplyVectorByScalar(PointCal.unitVectorFromA2B(origin, {x: arc.x, y: arc.y}), this.scale * PointCal.distanceBetweenPoints(origin, {x: arc.x, y: arc.y})));
-                        track.center = center;
-                        track.angleSpan = PointCal.angleFromA2B(PointCal.subVector(track.startPoint, center), PointCal.subVector(track.endPoint, center));
-                        // context.beginPath();
-                        // context.moveTo(arc.x, arc.y);
-                        // let startPoint = bCurve.get(arc.interval.start);
-                        // let endPoint = bCurve.get(arc.interval.end);
-                        // context.lineTo(startPoint.x, startPoint.y);
-                        // context.moveTo(arc.x, arc.y);
-                        // context.lineTo(endPoint.x, endPoint.y);
-                        // context.arcTo(startPoint.x, startPoint.y, endPoint.x, endPoint.y, arc.r);
-                        // context.stroke();
+                            startPoint: {x: bCurve.get(arc.interval.start).x, y: bCurve.get(arc.interval.start).y},
+                            endPoint: {x: bCurve.get(arc.interval.end).x, y: bCurve.get(arc.interval.end).y},
+                            radius: arc.r,
+                            center: {x: arc.x, y: arc.y},
+                        };
+                        track.angleSpan = PointCal.angleFromA2B(PointCal.subVector(track.startPoint, track.center), PointCal.subVector(track.endPoint, track.center));
                         if (startPoint.slope){
                             track.slope = startPoint.slope;
                         }
