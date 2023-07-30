@@ -2,7 +2,7 @@
 
 [Live Demo](https://vntchang.dev/racetrack-maker).
 
-This is essentially a customized bezier curve editor that I wrote for my horse racing simulation game. The editing logic follows the one in Blender. This is a tool for me to create tracks based on realistic racecourses in the world that I can use in the physics simulation engine. Currently, the menus and buttons are all in Chinese.  
+This is essentially a customized bezier curve editor that I wrote for my horse racing simulation game. The editing logic follows the one in Blender. This is a tool for me to create tracks based on real-life racecourses that I can use in the physics simulation engine. Currently, the menus and buttons are all in Chinese.  
 
 To Pan and Zoom 
 - Mouse and Keyboard: Hold MetaKey (command/windows) and drag the mouse to pan. Scroll the wheel to zoom.
