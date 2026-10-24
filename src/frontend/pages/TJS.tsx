@@ -8,7 +8,7 @@ import { useLocation } from 'react-router-dom';
 import { divide } from 'lodash';
 
 
-export default function TJS():JSX.Element {
+export default function TJS():React.JSX.Element {
 
     useEffect(setup, [])
 

@@ -1,1 +1,8 @@
 node_modules
+dist
+.git
+.vscode
+.env*
+submodules
+docs
+*.log

@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { HashRouter as Router, Navigate, Route, Routes } from 'react-router-dom';
 import {Home} from "./pages/Home";
 import RaceTrackBuilder from './pages/RaceTrackBuilder';
 
@@ -8,8 +8,9 @@ const Index = () => {
   return (
       <Router>
          <Routes>
-              <Route path="/racetrack-maker/" element={<Home/>}/>
-              <Route path="/racetrack-maker/builder" element={<RaceTrackBuilder/>}/>
+              <Route path="/" element={<Home/>}/>
+              <Route path="/builder" element={<RaceTrackBuilder/>}/>
+              <Route path="*" element={<Navigate to="/" replace/>}/>
           </Routes> 
       </Router>
   ); 

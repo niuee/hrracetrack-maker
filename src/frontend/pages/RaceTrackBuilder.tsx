@@ -70,14 +70,14 @@ const style = {
     p: 4,
 };
 
-export enum ViewMode {
+enum ViewMode {
     OBJECT = "OBJECT",
     EDIT = "EDIT",
 }
 
-export default function RaceTrackBuilder():JSX.Element {
+export default function RaceTrackBuilder():React.JSX.Element {
     const navigate = useNavigate();
-    const requestRef = React.useRef<number>();
+    const requestRef = React.useRef<number | null>(null);
     let origin = React.useRef<{centerx: number, centery:number, radius:number}>({centerx: 0, centery: 0, radius: 5});
     const [originCoord, setOriginCoord] = React.useState<Point>({x: 0, y: 0})
 
@@ -113,7 +113,7 @@ export default function RaceTrackBuilder():JSX.Element {
     let lastZoom = cameraZoom
     let canvas:HTMLCanvasElement;
     let racecourse_img:HTMLImageElement;
-    let ctx = React.useRef<CanvasRenderingContext2D>();
+    let ctx = React.useRef<CanvasRenderingContext2D | null>(null);
 
     const setup = () => {
         canvas = document.getElementById("canvas") as HTMLCanvasElement
@@ -125,12 +125,12 @@ export default function RaceTrackBuilder():JSX.Element {
 
 
         // Gets the relevant location from a mouse or single touch event
-        setImgString(defaultImage);
         canvas.addEventListener('mousedown', onPointerDown)
         canvas.addEventListener('mouseup', onPointerUp)
         canvas.addEventListener('mousemove', onPointerMove)
-        canvas.addEventListener( 'wheel', (e) => adjustZoom(e, e.deltaY*SCROLL_SENSITIVITY, 0.1))
-        window.addEventListener('keydown', (e) => {
+        const onWheel = (e: WheelEvent) => adjustZoom(e, e.deltaY*SCROLL_SENSITIVITY, 0.1);
+        canvas.addEventListener('wheel', onWheel);
+        const onKeyDown = (e: KeyboardEvent) => {
             if (e.altKey) {
                 switchMode();
             } 
@@ -164,10 +164,20 @@ export default function RaceTrackBuilder():JSX.Element {
                 engageGrab();
             }
             
-        });
+        };
+        window.addEventListener('keydown', onKeyDown);
         // document.title = "賽道創作者";
         requestRef.current = requestAnimationFrame(draw);
-        return ()=>{cancelAnimationFrame(requestRef.current)}
+        return () => {
+            canvas.removeEventListener('mousedown', onPointerDown);
+            canvas.removeEventListener('mouseup', onPointerUp);
+            canvas.removeEventListener('mousemove', onPointerMove);
+            canvas.removeEventListener('wheel', onWheel);
+            window.removeEventListener('keydown', onKeyDown);
+            if (requestRef.current !== null) {
+                cancelAnimationFrame(requestRef.current);
+            }
+        };
     };
 
     useEffect(setup, []);
@@ -577,7 +587,7 @@ export default function RaceTrackBuilder():JSX.Element {
             <div style={{position: 'absolute', top:"90vh", left: "90vw"}}>Default Image Source: JRA</div>
             <Stack alignItems={'center'} spacing={2}style={{position: "absolute", margin:"50px", width: "10vw", height: "80vh", overflow: "scroll"}} >
                 <div>
-                    <Button onClick={()=>{navigate("/racetrack-maker/")}} variant="contained">回到首頁</Button>
+                    <Button onClick={()=>{navigate("/")}} variant="contained">回到首頁</Button>
                 </div>
                 {/* <Button  style={{display: viewMode == ViewMode.OBJECT? "block": "none"}} onClick={testFunctionButton} variant="contained">測試功能按鈕</Button> */}
                 <Button

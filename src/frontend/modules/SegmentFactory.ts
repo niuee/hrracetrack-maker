@@ -1,7 +1,5 @@
 import { Bezier, Point } from "bezier-js";
 import { VectorCal } from "./Utils";
-import { urlToHttpOptions } from "url";
-import { start } from "repl";
 
 
 
@@ -455,6 +453,5 @@ export class SegmentFactory {
         return new CubicBezierSegment(name, bezierCurve);
     }
 }
-
 
 

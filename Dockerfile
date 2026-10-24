@@ -1,10 +1,16 @@
-FROM node:lts-alpine3.18
+FROM node:22-alpine AS build
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY index.html vite.config.ts tsconfig.json ./
+COPY src/frontend ./src/frontend
+COPY public ./public
+RUN pnpm build
+
+FROM nginx:stable-alpine
 ARG PORT=3001
-WORKDIR /home/node/app
-COPY . /home/node/app/
-RUN npm install
-RUN npx webpack
-RUN ./mv_public.sh
+ENV PORT=${PORT}
+COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY --from=build /app/dist /usr/share/nginx/html
 EXPOSE ${PORT}
-ENV CMD_PORT ${PORT}
-CMD npm start ${CMD_PORT}
