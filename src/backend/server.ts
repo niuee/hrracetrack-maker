@@ -33,7 +33,7 @@ app.get("*", (req, res)=>{
     // console.log(req.originalUrl);
     // console.log("404 not found");
     // res.status(404).send();
-    res.redirect("/racetrack-maker");
+    res.redirect("/");
 })
 
 const port = serverPort || process.env.PORT || 5000;
