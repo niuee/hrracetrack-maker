@@ -3,7 +3,7 @@ import {Grid, Typography} from '@mui/material';
 import { Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
-export function Home():JSX.Element{
+export function Home():React.JSX.Element{
     let navigate = useNavigate();
     return(
         <Grid

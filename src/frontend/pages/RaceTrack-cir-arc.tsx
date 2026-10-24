@@ -49,7 +49,7 @@ type SegmentData = {
 }
 
 
-export default function RaceTrackBuildCircularArcPage():JSX.Element {
+export default function RaceTrackBuildCircularArcPage():React.JSX.Element {
     const navigate = useNavigate();
     const tracksegmentObserver = useRef<TrackSegmentObserver>(new TrackSegmentObserver());
     const tracksegmentMaker = useRef<SegmentFactory>(new SegmentFactory("factory"));
@@ -75,7 +75,7 @@ export default function RaceTrackBuildCircularArcPage():JSX.Element {
     let img_loaded = false;
     let canvas:HTMLCanvasElement;
     let racecourse_img:HTMLImageElement;
-    let ctx = React.useRef<CanvasRenderingContext2D>();
+    let ctx = React.useRef<CanvasRenderingContext2D | null>(null);
 
     const setup = () => {
         canvas = document.getElementById("canvas") as HTMLCanvasElement
